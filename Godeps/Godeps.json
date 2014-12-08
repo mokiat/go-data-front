@@ -1,0 +1,8 @@
+{
+	"ImportPath": "github.com/momchil-atanasov/go-data-front",
+	"GoVersion": "go1.4rc2",
+	"Packages": [
+		"./..."
+	],
+	"Deps": []
+}
