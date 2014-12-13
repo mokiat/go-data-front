@@ -1,4 +1,4 @@
-package model
+package obj
 
 type Normal struct {
 	X float32
