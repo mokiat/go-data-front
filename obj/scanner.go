@@ -54,12 +54,25 @@ func Scan(reader io.Reader, handler ScannerHandler) error {
 			break
 		case line.IsCommand(commandComment):
 			processVertex(line, handler)
+			break
 		case line.IsCommand(commandTexCoord):
 			processTexCoord(line, handler)
+			break
 		case line.IsCommand(commandNormal):
 			processNormal(line, handler)
+			break
 		case line.IsCommand(commandObject):
 			processObject(line, handler)
+			break
+		case line.IsCommand(commandFace):
+			processFace(line, handler)
+			break
+		case line.IsCommand(commandMaterialLib):
+			processMaterialLibrary(line, handler)
+			break
+		case line.IsCommand(commandMaterialRef):
+			processMaterialReference(line, handler)
+			break
 		}
 		if line.IsAtEOF() {
 			return nil
@@ -105,5 +118,29 @@ func processNormal(line ScanLine, handler ScannerHandler) error {
 func processObject(line ScanLine, handler ScannerHandler) error {
 	name := line.StringParam(0)
 	handler.OnObject(name)
+	return nil
+}
+
+func processFace(line ScanLine, handler ScannerHandler) error {
+	handler.OnFaceStart()
+	handler.OnFaceEnd()
+	return nil
+}
+
+func processMaterialLibrary(line ScanLine, handler ScannerHandler) error {
+	for i := 0; i < line.ParamCount(); i++ {
+		path := line.StringParam(i)
+		handler.OnMaterialLibrary(path)
+	}
+	return nil
+}
+
+func processMaterialReference(line ScanLine, handler ScannerHandler) error {
+	if line.ParamCount() > 0 {
+		name := line.StringParam(0)
+		handler.OnMaterialReference(name)
+	} else {
+		handler.OnMaterialReference("")
+	}
 	return nil
 }

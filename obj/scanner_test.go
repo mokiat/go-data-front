@@ -27,6 +27,10 @@ var _ = Describe("Scanner", func() {
 	var texCoordWCounter int
 	var normalCounter int
 	var objectCounter int
+	var faceStartCounter int
+	var faceEndCounter int
+	var materialLibraryCounter int
+	var materialReferenceCounter int
 
 	BeforeEach(func() {
 		handler = new(fakes.FakeScannerHandler)
@@ -45,6 +49,10 @@ var _ = Describe("Scanner", func() {
 		texCoordWCounter = 0
 		normalCounter = 0
 		objectCounter = 0
+		faceStartCounter = 0
+		faceEndCounter = 0
+		materialLibraryCounter = 0
+		materialReferenceCounter = 0
 	})
 
 	scanFile := func(filename string) {
@@ -143,6 +151,30 @@ var _ = Describe("Scanner", func() {
 		objectCounter++
 	}
 
+	assertFaceStart := func() {
+		Ω(handler.OnFaceStartCallCount()).Should(BeNumerically(">", faceStartCounter))
+		faceStartCounter++
+	}
+
+	assertFaceEnd := func() {
+		Ω(handler.OnFaceEndCallCount()).Should(BeNumerically(">", faceEndCounter))
+		faceEndCounter++
+	}
+
+	assertMaterialLibrary := func(expectedPath string) {
+		Ω(handler.OnMaterialLibraryCallCount()).Should(BeNumerically(">", materialLibraryCounter))
+		pathArg := handler.OnMaterialLibraryArgsForCall(materialLibraryCounter)
+		Ω(pathArg).Should(Equal(expectedPath))
+		materialLibraryCounter++
+	}
+
+	assertMaterialReference := func(expectedName string) {
+		Ω(handler.OnMaterialReferenceCallCount()).Should(BeNumerically(">", materialReferenceCounter))
+		nameArg := handler.OnMaterialReferenceArgsForCall(materialReferenceCounter)
+		Ω(nameArg).Should(Equal(expectedName))
+		materialReferenceCounter++
+	}
+
 	Context("when a basic OBJ file is scanned", func() {
 		BeforeEach(func() {
 			scanFile("testres/valid_basic.obj")
@@ -174,6 +206,21 @@ var _ = Describe("Scanner", func() {
 
 		It("should have scanned the objects", func() {
 			assertObject("MyObject")
+		})
+
+		It("should have scanned the faces", func() {
+			assertFaceStart()
+			assertFaceEnd()
+		})
+
+		// TODO: Test for data references
+
+		It("should have scanned material libraries", func() {
+			assertMaterialLibrary("valid_basic.mtl")
+		})
+
+		It("should have scanned material references", func() {
+			assertMaterialReference("BlueMaterial")
 		})
 	})
 
