@@ -142,6 +142,11 @@ func (f *HandlerFixture) AssertFaceEnd() {
 	f.faceEndCounter++
 }
 
+func (f *HandlerFixture) AssertFaceCallCount(expectedCount int) {
+	Ω(f.handler.OnFaceStartCallCount()).Should(Equal(expectedCount))
+	Ω(f.handler.OnFaceEndCallCount()).Should(Equal(expectedCount))
+}
+
 func (f *HandlerFixture) AssertCoordReferenceStart() {
 	Ω(f.handler.OnCoordReferenceStartCallCount()).Should(BeNumerically(">", f.coordReferenceStartCounter))
 	f.coordReferenceStartCounter++
@@ -150,6 +155,11 @@ func (f *HandlerFixture) AssertCoordReferenceStart() {
 func (f *HandlerFixture) AssertCoordReferenceEnd() {
 	Ω(f.handler.OnCoordReferenceEndCallCount()).Should(BeNumerically(">", f.coordReferenceEndCounter))
 	f.coordReferenceEndCounter++
+}
+
+func (f *HandlerFixture) AssertCoordReferenceCallCount(expectedCount int) {
+	Ω(f.handler.OnCoordReferenceStartCallCount()).Should(Equal(expectedCount))
+	Ω(f.handler.OnCoordReferenceEndCallCount()).Should(Equal(expectedCount))
 }
 
 func (f *HandlerFixture) AssertVertexIndex(expectedIndex int) {

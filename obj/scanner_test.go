@@ -176,4 +176,14 @@ var _ = Describe("Scanner", func() {
 		})
 	})
 
+	Context("when a file with all kinds of faces is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/valid_faces.obj")
+		})
+
+		It("should have scanned them correctly", func() {
+			handlerFixture.AssertFaceCallCount(3)
+			handlerFixture.AssertCoordReferenceCallCount(12)
+		})
+	})
 })
