@@ -116,16 +116,20 @@ func (c *scanLine) CoordReferenceParam(index int) ScanCoordReference {
 		panic(err)
 	}
 
-	result.HasTexCoordIndex = true
-	result.TexCoordIndex, err = strconv.Atoi(references[1])
-	if err != nil {
-		panic(err)
+	result.HasTexCoordIndex = len(references) > 1 && (references[1] != "")
+	if result.HasTexCoordIndex {
+		result.TexCoordIndex, err = strconv.Atoi(references[1])
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	result.HasNormalIndex = true
-	result.NormalIndex, err = strconv.Atoi(references[2])
-	if err != nil {
-		panic(err)
+	result.HasNormalIndex = len(references) > 2 && (references[2] != "")
+	if result.HasNormalIndex {
+		result.NormalIndex, err = strconv.Atoi(references[2])
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return result

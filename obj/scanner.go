@@ -141,8 +141,12 @@ func (s *scanner) processFace(line ScanLine) error {
 		s.handler.OnCoordReferenceStart()
 		coordReference := line.CoordReferenceParam(i)
 		s.handler.OnVertexIndex(coordReference.VertexIndex)
-		s.handler.OnTexCoordIndex(coordReference.TexCoordIndex)
-		s.handler.OnNormalIndex(coordReference.NormalIndex)
+		if coordReference.HasTexCoordIndex {
+			s.handler.OnTexCoordIndex(coordReference.TexCoordIndex)
+		}
+		if coordReference.HasNormalIndex {
+			s.handler.OnNormalIndex(coordReference.NormalIndex)
+		}
 		s.handler.OnCoordReferenceEnd()
 	}
 	s.handler.OnFaceEnd()
