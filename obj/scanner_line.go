@@ -17,7 +17,16 @@ type ScanLine interface {
 	ParamCount() int
 	FloatParam(index int) float32
 	StringParam(index int) string
+	CoordReferenceParam(index int) ScanCoordReference
 	GetComment() string
+}
+
+type ScanCoordReference struct {
+	HasTexCoordIndex bool
+	HasNormalIndex   bool
+	VertexIndex      int
+	TexCoordIndex    int
+	NormalIndex      int
 }
 
 type scanLine struct {
@@ -95,6 +104,31 @@ func (c *scanLine) FloatParam(index int) float32 {
 
 func (c *scanLine) StringParam(index int) string {
 	return c.segments[index+1]
+}
+
+func (c *scanLine) CoordReferenceParam(index int) ScanCoordReference {
+	var err error
+	result := ScanCoordReference{}
+	references := strings.Split(c.segments[index+1], "/")
+
+	result.VertexIndex, err = strconv.Atoi(references[0])
+	if err != nil {
+		panic(err)
+	}
+
+	result.HasTexCoordIndex = true
+	result.TexCoordIndex, err = strconv.Atoi(references[1])
+	if err != nil {
+		panic(err)
+	}
+
+	result.HasNormalIndex = true
+	result.NormalIndex, err = strconv.Atoi(references[2])
+	if err != nil {
+		panic(err)
+	}
+
+	return result
 }
 
 func (c *scanLine) GetComment() string {

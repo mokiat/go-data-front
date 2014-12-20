@@ -5,6 +5,14 @@ import (
 	"io"
 )
 
+const commandComment = "v"
+const commandTexCoord = "vt"
+const commandNormal = "vn"
+const commandObject = "o"
+const commandFace = "f"
+const commandMaterialRef = "usemtl"
+const commandMaterialLib = "mtllib"
+
 type ScannerHandler interface {
 	OnComment(comment string) error
 	OnMaterialLibrary(path string) error
@@ -31,15 +39,21 @@ type ScannerHandler interface {
 	OnFaceEnd() error
 }
 
-const commandComment = "v"
-const commandTexCoord = "vt"
-const commandNormal = "vn"
-const commandObject = "o"
-const commandFace = "f"
-const commandMaterialRef = "usemtl"
-const commandMaterialLib = "mtllib"
+type Scanner interface {
+	Scan(io.Reader) error
+}
 
-func Scan(reader io.Reader, handler ScannerHandler) error {
+type scanner struct {
+	handler ScannerHandler
+}
+
+func NewScanner(handler ScannerHandler) Scanner {
+	return &scanner{
+		handler: handler,
+	}
+}
+
+func (s *scanner) Scan(reader io.Reader) error {
 	line := NewScanLine()
 
 	scanner := bufio.NewScanner(reader)
@@ -50,28 +64,28 @@ func Scan(reader io.Reader, handler ScannerHandler) error {
 		case line.IsBlank():
 			break
 		case line.IsComment():
-			processComment(line, handler)
+			s.processComment(line)
 			break
 		case line.IsCommand(commandComment):
-			processVertex(line, handler)
+			s.processVertex(line)
 			break
 		case line.IsCommand(commandTexCoord):
-			processTexCoord(line, handler)
+			s.processTexCoord(line)
 			break
 		case line.IsCommand(commandNormal):
-			processNormal(line, handler)
+			s.processNormal(line)
 			break
 		case line.IsCommand(commandObject):
-			processObject(line, handler)
+			s.processObject(line)
 			break
 		case line.IsCommand(commandFace):
-			processFace(line, handler)
+			s.processFace(line)
 			break
 		case line.IsCommand(commandMaterialLib):
-			processMaterialLibrary(line, handler)
+			s.processMaterialLibrary(line)
 			break
 		case line.IsCommand(commandMaterialRef):
-			processMaterialReference(line, handler)
+			s.processMaterialReference(line)
 			break
 		}
 		if line.IsAtEOF() {
@@ -80,67 +94,75 @@ func Scan(reader io.Reader, handler ScannerHandler) error {
 	}
 }
 
-func processComment(line ScanLine, handler ScannerHandler) error {
-	handler.OnComment(line.GetComment())
+func (s *scanner) processComment(line ScanLine) error {
+	s.handler.OnComment(line.GetComment())
 	return nil
 }
 
-func processVertex(line ScanLine, handler ScannerHandler) error {
-	handler.OnVertexStart()
+func (s *scanner) processVertex(line ScanLine) error {
+	s.handler.OnVertexStart()
 	x := line.FloatParam(0)
-	handler.OnVertexX(x)
+	s.handler.OnVertexX(x)
 	y := line.FloatParam(1)
-	handler.OnVertexY(y)
+	s.handler.OnVertexY(y)
 	z := line.FloatParam(2)
-	handler.OnVertexZ(z)
-	handler.OnVertexEnd()
+	s.handler.OnVertexZ(z)
+	s.handler.OnVertexEnd()
 	return nil
 }
 
-func processTexCoord(line ScanLine, handler ScannerHandler) error {
+func (s *scanner) processTexCoord(line ScanLine) error {
 	u := line.FloatParam(0)
 	v := line.FloatParam(1)
-	handler.OnTexCoordStart()
-	handler.OnTexCoordU(u)
-	handler.OnTexCoordV(v)
-	handler.OnTexCoordEnd()
+	s.handler.OnTexCoordStart()
+	s.handler.OnTexCoordU(u)
+	s.handler.OnTexCoordV(v)
+	s.handler.OnTexCoordEnd()
 	return nil
 }
 
-func processNormal(line ScanLine, handler ScannerHandler) error {
+func (s *scanner) processNormal(line ScanLine) error {
 	x := line.FloatParam(0)
 	y := line.FloatParam(1)
 	z := line.FloatParam(2)
-	handler.OnNormal(x, y, z)
+	s.handler.OnNormal(x, y, z)
 	return nil
 }
 
-func processObject(line ScanLine, handler ScannerHandler) error {
+func (s *scanner) processObject(line ScanLine) error {
 	name := line.StringParam(0)
-	handler.OnObject(name)
+	s.handler.OnObject(name)
 	return nil
 }
 
-func processFace(line ScanLine, handler ScannerHandler) error {
-	handler.OnFaceStart()
-	handler.OnFaceEnd()
+func (s *scanner) processFace(line ScanLine) error {
+	s.handler.OnFaceStart()
+	for i := 0; i < line.ParamCount(); i++ {
+		s.handler.OnCoordReferenceStart()
+		coordReference := line.CoordReferenceParam(i)
+		s.handler.OnVertexIndex(coordReference.VertexIndex)
+		s.handler.OnTexCoordIndex(coordReference.TexCoordIndex)
+		s.handler.OnNormalIndex(coordReference.NormalIndex)
+		s.handler.OnCoordReferenceEnd()
+	}
+	s.handler.OnFaceEnd()
 	return nil
 }
 
-func processMaterialLibrary(line ScanLine, handler ScannerHandler) error {
+func (s *scanner) processMaterialLibrary(line ScanLine) error {
 	for i := 0; i < line.ParamCount(); i++ {
 		path := line.StringParam(i)
-		handler.OnMaterialLibrary(path)
+		s.handler.OnMaterialLibrary(path)
 	}
 	return nil
 }
 
-func processMaterialReference(line ScanLine, handler ScannerHandler) error {
+func (s *scanner) processMaterialReference(line ScanLine) error {
 	if line.ParamCount() > 0 {
 		name := line.StringParam(0)
-		handler.OnMaterialReference(name)
+		s.handler.OnMaterialReference(name)
 	} else {
-		handler.OnMaterialReference("")
+		s.handler.OnMaterialReference("")
 	}
 	return nil
 }

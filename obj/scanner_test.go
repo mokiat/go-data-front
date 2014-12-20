@@ -13,6 +13,8 @@ import (
 var _ = Describe("Scanner", func() {
 
 	var handler *fakes.FakeScannerHandler
+	var scanner Scanner
+
 	var scanError error
 	var commentCounter int
 	var vertexStartCounter int
@@ -31,9 +33,15 @@ var _ = Describe("Scanner", func() {
 	var faceEndCounter int
 	var materialLibraryCounter int
 	var materialReferenceCounter int
+	var coordReferenceStartCounter int
+	var coordReferenceEndCounter int
+	var vertexIndexCounter int
+	var texCoordIndexCounter int
+	var normalIndexCounter int
 
 	BeforeEach(func() {
 		handler = new(fakes.FakeScannerHandler)
+		scanner = NewScanner(handler)
 		scanError = nil
 
 		commentCounter = 0
@@ -53,6 +61,11 @@ var _ = Describe("Scanner", func() {
 		faceEndCounter = 0
 		materialLibraryCounter = 0
 		materialReferenceCounter = 0
+		coordReferenceStartCounter = 0
+		coordReferenceEndCounter = 0
+		vertexIndexCounter = 0
+		texCoordIndexCounter = 0
+		normalIndexCounter = 0
 	})
 
 	scanFile := func(filename string) {
@@ -61,7 +74,7 @@ var _ = Describe("Scanner", func() {
 			panic(err)
 		}
 		defer file.Close()
-		scanError = Scan(file, handler)
+		scanError = scanner.Scan(file)
 	}
 
 	assertComment := func(expectedComment string) {
@@ -175,6 +188,37 @@ var _ = Describe("Scanner", func() {
 		materialReferenceCounter++
 	}
 
+	assertCoordReferenceStart := func() {
+		Ω(handler.OnCoordReferenceStartCallCount()).Should(BeNumerically(">", coordReferenceStartCounter))
+		coordReferenceStartCounter++
+	}
+
+	assertCoordReferenceEnd := func() {
+		Ω(handler.OnCoordReferenceEndCallCount()).Should(BeNumerically(">", coordReferenceEndCounter))
+		coordReferenceEndCounter++
+	}
+
+	assertVertexIndex := func(expectedIndex int) {
+		Ω(handler.OnVertexIndexCallCount()).Should(BeNumerically(">", vertexIndexCounter))
+		argIndex := handler.OnVertexIndexArgsForCall(vertexIndexCounter)
+		Ω(argIndex).Should(Equal(expectedIndex))
+		vertexIndexCounter++
+	}
+
+	assertTexCoordIndex := func(expectedIndex int) {
+		Ω(handler.OnTexCoordIndexCallCount()).Should(BeNumerically(">", texCoordIndexCounter))
+		argIndex := handler.OnTexCoordIndexArgsForCall(texCoordIndexCounter)
+		Ω(argIndex).Should(Equal(expectedIndex))
+		texCoordIndexCounter++
+	}
+
+	assertNormalIndex := func(expectedIndex int) {
+		Ω(handler.OnNormalIndexCallCount()).Should(BeNumerically(">", normalIndexCounter))
+		argIndex := handler.OnNormalIndexArgsForCall(normalIndexCounter)
+		Ω(argIndex).Should(Equal(expectedIndex))
+		normalIndexCounter++
+	}
+
 	Context("when a basic OBJ file is scanned", func() {
 		BeforeEach(func() {
 			scanFile("testres/valid_basic.obj")
@@ -213,7 +257,25 @@ var _ = Describe("Scanner", func() {
 			assertFaceEnd()
 		})
 
-		// TODO: Test for data references
+		It("should have scanned data references", func() {
+			assertCoordReferenceStart()
+			assertVertexIndex(1)
+			assertTexCoordIndex(4)
+			assertNormalIndex(1)
+			assertCoordReferenceEnd()
+
+			assertCoordReferenceStart()
+			assertVertexIndex(2)
+			assertTexCoordIndex(1)
+			assertNormalIndex(1)
+			assertCoordReferenceEnd()
+
+			assertCoordReferenceStart()
+			assertVertexIndex(3)
+			assertTexCoordIndex(3)
+			assertNormalIndex(2)
+			assertCoordReferenceEnd()
+		})
 
 		It("should have scanned material libraries", func() {
 			assertMaterialLibrary("valid_basic.mtl")
