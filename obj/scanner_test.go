@@ -7,6 +7,7 @@ import (
 	"github.com/momchil-atanasov/go-data-front/obj/test_helpers"
 
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Scanner", func() {
@@ -34,6 +35,10 @@ var _ = Describe("Scanner", func() {
 	Context("when a basic OBJ file is scanned", func() {
 		BeforeEach(func() {
 			scanFile("testres/valid_basic.obj")
+		})
+
+		It("should not have returned an error", func() {
+			Ω(scanError).ShouldNot(HaveOccurred())
 		})
 
 		It("should have scanned the comments", func() {
@@ -104,6 +109,10 @@ var _ = Describe("Scanner", func() {
 			scanFile("testres/valid_comments.obj")
 		})
 
+		It("should not have returned an error", func() {
+			Ω(scanError).ShouldNot(HaveOccurred())
+		})
+
 		It("should have scanned the comments", func() {
 			handlerFixture.AssertCommentCall("Comment at file start")
 			handlerFixture.AssertCommentCall("Comment that is right next to special char")
@@ -119,6 +128,10 @@ var _ = Describe("Scanner", func() {
 	Context("when a file with all kinds of coord references is scanned", func() {
 		BeforeEach(func() {
 			scanFile("testres/valid_coord_references.obj")
+		})
+
+		It("should not have returned an error", func() {
+			Ω(scanError).ShouldNot(HaveOccurred())
 		})
 
 		It("should have scanned them correctly", func() {
@@ -181,9 +194,23 @@ var _ = Describe("Scanner", func() {
 			scanFile("testres/valid_faces.obj")
 		})
 
+		It("should not have returned an error", func() {
+			Ω(scanError).ShouldNot(HaveOccurred())
+		})
+
 		It("should have scanned them correctly", func() {
 			handlerFixture.AssertFaceCallCount(3)
 			handlerFixture.AssertCoordReferenceCallCount(12)
+		})
+	})
+
+	Context("when a file with unknown command is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/valid_unknown_command.obj")
+		})
+
+		It("should ignore it and not return an error", func() {
+			Ω(scanError).ShouldNot(HaveOccurred())
 		})
 	})
 })
