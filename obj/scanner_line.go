@@ -15,9 +15,9 @@ type ScanLine interface {
 	IsComment() bool
 	IsCommand(name string) bool
 	ParamCount() int
-	FloatParam(index int) float32
 	StringParam(index int) string
-	CoordReferenceParam(index int) ScanCoordReference
+	FloatParam(index int) (float32, error)
+	CoordReferenceParam(index int) (ScanCoordReference, error)
 	GetComment() string
 }
 
@@ -41,7 +41,7 @@ type scanLine struct {
 func NewScanLine() ScanLine {
 	regex, err := regexp.Compile("[\\s]+")
 	if err != nil {
-		panic(err) // TODO: Maybe return as error?
+		panic(err)
 	}
 	return &scanLine{
 		atEOF:        false,
@@ -93,34 +93,33 @@ func (c *scanLine) ParamCount() int {
 	return count
 }
 
-func (c *scanLine) FloatParam(index int) float32 {
-	segment := c.segments[index+1]
-	value, err := strconv.ParseFloat(segment, 32)
-	if err != nil {
-		panic(err) // TODO
-	}
-	return float32(value)
-}
-
 func (c *scanLine) StringParam(index int) string {
 	return c.segments[index+1]
 }
 
-func (c *scanLine) CoordReferenceParam(index int) ScanCoordReference {
+func (c *scanLine) FloatParam(index int) (float32, error) {
+	value, err := strconv.ParseFloat(c.StringParam(index), 32)
+	if err != nil {
+		return 0.0, err
+	}
+	return float32(value), nil
+}
+
+func (c *scanLine) CoordReferenceParam(index int) (ScanCoordReference, error) {
 	var err error
 	result := ScanCoordReference{}
-	references := strings.Split(c.segments[index+1], "/")
+	references := strings.Split(c.StringParam(index), "/")
 
 	result.VertexIndex, err = strconv.Atoi(references[0])
 	if err != nil {
-		panic(err)
+		return ScanCoordReference{}, err
 	}
 
 	result.HasTexCoordIndex = len(references) > 1 && (references[1] != "")
 	if result.HasTexCoordIndex {
 		result.TexCoordIndex, err = strconv.Atoi(references[1])
 		if err != nil {
-			panic(err)
+			return ScanCoordReference{}, err
 		}
 	}
 
@@ -128,11 +127,11 @@ func (c *scanLine) CoordReferenceParam(index int) ScanCoordReference {
 	if result.HasNormalIndex {
 		result.NormalIndex, err = strconv.Atoi(references[2])
 		if err != nil {
-			panic(err)
+			return ScanCoordReference{}, err
 		}
 	}
 
-	return result
+	return result, nil
 }
 
 func (c *scanLine) GetComment() string {

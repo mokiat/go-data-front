@@ -2,6 +2,7 @@ package obj
 
 import (
 	"bufio"
+	"errors"
 	"io"
 )
 
@@ -60,33 +61,37 @@ func (s *scanner) Scan(reader io.Reader) error {
 	for {
 		line.Parse(scanner)
 		// TODO: Handle Parse error
+		var err error
 		switch {
 		case line.IsBlank():
 			break
 		case line.IsComment():
-			s.processComment(line)
+			err = s.processComment(line)
 			break
 		case line.IsCommand(commandComment):
-			s.processVertex(line)
+			err = s.processVertex(line)
 			break
 		case line.IsCommand(commandTexCoord):
-			s.processTexCoord(line)
+			err = s.processTexCoord(line)
 			break
 		case line.IsCommand(commandNormal):
-			s.processNormal(line)
+			err = s.processNormal(line)
 			break
 		case line.IsCommand(commandObject):
-			s.processObject(line)
+			err = s.processObject(line)
 			break
 		case line.IsCommand(commandFace):
-			s.processFace(line)
+			err = s.processFace(line)
 			break
 		case line.IsCommand(commandMaterialLib):
-			s.processMaterialLibrary(line)
+			err = s.processMaterialLibrary(line)
 			break
 		case line.IsCommand(commandMaterialRef):
-			s.processMaterialReference(line)
+			err = s.processMaterialReference(line)
 			break
+		}
+		if err != nil {
+			return err
 		}
 		if line.IsAtEOF() {
 			return nil
@@ -100,36 +105,83 @@ func (s *scanner) processComment(line ScanLine) error {
 }
 
 func (s *scanner) processVertex(line ScanLine) error {
+	if line.ParamCount() < 3 {
+		return errors.New("Insufficient vertex data.")
+	}
 	s.handler.OnVertexStart()
-	x := line.FloatParam(0)
+
+	x, err := line.FloatParam(0)
+	if err != nil {
+		return err
+	}
 	s.handler.OnVertexX(x)
-	y := line.FloatParam(1)
+
+	y, err := line.FloatParam(1)
+	if err != nil {
+		return err
+	}
 	s.handler.OnVertexY(y)
-	z := line.FloatParam(2)
+
+	z, err := line.FloatParam(2)
+	if err != nil {
+		return err
+	}
 	s.handler.OnVertexZ(z)
+
 	s.handler.OnVertexEnd()
 	return nil
 }
 
 func (s *scanner) processTexCoord(line ScanLine) error {
-	u := line.FloatParam(0)
-	v := line.FloatParam(1)
+	if line.ParamCount() == 0 {
+		return errors.New("Insufficient texture coordinate data.")
+	}
 	s.handler.OnTexCoordStart()
+
+	u, err := line.FloatParam(0)
+	if err != nil {
+		return err
+	}
 	s.handler.OnTexCoordU(u)
+
+	v, err := line.FloatParam(1)
+	if err != nil {
+		return err
+	}
 	s.handler.OnTexCoordV(v)
+
 	s.handler.OnTexCoordEnd()
 	return nil
 }
 
 func (s *scanner) processNormal(line ScanLine) error {
-	x := line.FloatParam(0)
-	y := line.FloatParam(1)
-	z := line.FloatParam(2)
+	if line.ParamCount() < 3 {
+		return errors.New("Insufficient normal data.")
+	}
+
+	x, err := line.FloatParam(0)
+	if err != nil {
+		return err
+	}
+
+	y, err := line.FloatParam(1)
+	if err != nil {
+		return err
+	}
+
+	z, err := line.FloatParam(2)
+	if err != nil {
+		return err
+	}
+
 	s.handler.OnNormal(x, y, z)
 	return nil
 }
 
 func (s *scanner) processObject(line ScanLine) error {
+	if line.ParamCount() == 0 {
+		return errors.New("No name specified for object.")
+	}
 	name := line.StringParam(0)
 	s.handler.OnObject(name)
 	return nil
@@ -139,7 +191,12 @@ func (s *scanner) processFace(line ScanLine) error {
 	s.handler.OnFaceStart()
 	for i := 0; i < line.ParamCount(); i++ {
 		s.handler.OnCoordReferenceStart()
-		coordReference := line.CoordReferenceParam(i)
+
+		coordReference, err := line.CoordReferenceParam(i)
+		if err != nil {
+			return err
+		}
+
 		s.handler.OnVertexIndex(coordReference.VertexIndex)
 		if coordReference.HasTexCoordIndex {
 			s.handler.OnTexCoordIndex(coordReference.TexCoordIndex)
@@ -147,6 +204,7 @@ func (s *scanner) processFace(line ScanLine) error {
 		if coordReference.HasNormalIndex {
 			s.handler.OnNormalIndex(coordReference.NormalIndex)
 		}
+
 		s.handler.OnCoordReferenceEnd()
 	}
 	s.handler.OnFaceEnd()

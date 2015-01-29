@@ -14,7 +14,6 @@ var _ = Describe("Scanner", func() {
 
 	var handlerFixture *test_helpers.HandlerFixture
 	var scanner Scanner
-
 	var scanError error
 
 	BeforeEach(func() {
@@ -32,14 +31,24 @@ var _ = Describe("Scanner", func() {
 		scanError = scanner.Scan(file)
 	}
 
+	itShouldHaveReturnedAnError := func() {
+		It("should have returned an error", func() {
+			Ω(scanError).Should(HaveOccurred())
+		})
+	}
+
+	itShouldNotHaveReturnedAnError := func() {
+		It("should not have returned an error", func() {
+			Ω(scanError).ShouldNot(HaveOccurred())
+		})
+	}
+
 	Context("when a basic OBJ file is scanned", func() {
 		BeforeEach(func() {
 			scanFile("testres/valid_basic.obj")
 		})
 
-		It("should not have returned an error", func() {
-			Ω(scanError).ShouldNot(HaveOccurred())
-		})
+		itShouldNotHaveReturnedAnError()
 
 		It("should have scanned the comments", func() {
 			handlerFixture.AssertCommentCall("This is the beginning of this OBJ file.")
@@ -51,6 +60,7 @@ var _ = Describe("Scanner", func() {
 			handlerFixture.AssertVertexXYZ(-1.0, -1.0, 1.0)
 			handlerFixture.AssertVertexXYZ(1.0, -1.0, -1.0)
 			handlerFixture.AssertVertexXYZ(1.0, 1.0, 1.0)
+			handlerFixture.AssertNoMoreVertices()
 		})
 
 		It("should have scanned the texture coordinates", func() {
@@ -194,9 +204,7 @@ var _ = Describe("Scanner", func() {
 			scanFile("testres/valid_faces.obj")
 		})
 
-		It("should not have returned an error", func() {
-			Ω(scanError).ShouldNot(HaveOccurred())
-		})
+		itShouldNotHaveReturnedAnError()
 
 		It("should have scanned them correctly", func() {
 			handlerFixture.AssertFaceCallCount(3)
@@ -212,5 +220,85 @@ var _ = Describe("Scanner", func() {
 		It("should ignore it and not return an error", func() {
 			Ω(scanError).ShouldNot(HaveOccurred())
 		})
+	})
+
+	Context("when a file with insufficient vertex data is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/error_insufficient_vertex_data.obj")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when a file with insufficient texture coordinate data is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/error_insufficient_texcoord_data.obj")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when a file with insufficient normal data is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/error_insufficient_normal_data.obj")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when a file with an unnamed object is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/error_empty_object_name.obj")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when a file with corrupt vertex is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/error_corrupt_vertex.obj")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when a file with corrupt texture coordinate is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/error_corrupt_texcoord.obj")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when a file with corrupt normal is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/error_corrupt_normal.obj")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when a file with corrupt vertex reference is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/error_corrupt_vertex_reference.obj")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when a file with corrupt texture coordinate reference is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/error_corrupt_texcoord_reference.obj")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when a file with corrupt normal reference is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/error_corrupt_normal_reference.obj")
+		})
+
+		itShouldHaveReturnedAnError()
 	})
 })

@@ -87,6 +87,11 @@ func (f *HandlerFixture) AssertVertexXYZ(expectedX, expectedY, expectedZ float32
 	f.AssertVertexEnd()
 }
 
+func (f *HandlerFixture) AssertNoMoreVertices() {
+	Ω(f.handler.OnVertexStartCallCount()).Should(Equal(f.vertexStartCounter))
+	Ω(f.handler.OnVertexEndCallCount()).Should(Equal(f.vertexEndCounter))
+}
+
 func (f *HandlerFixture) AssertTexCoordStart() {
 	Ω(f.handler.OnTexCoordStartCallCount()).Should(BeNumerically(">", f.texCoordStartCounter))
 	f.texCoordStartCounter++
