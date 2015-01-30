@@ -1,6 +1,7 @@
 package obj_test
 
 import (
+	"io"
 	"os"
 
 	. "github.com/momchil-atanasov/go-data-front/obj"
@@ -22,13 +23,17 @@ var _ = Describe("Scanner", func() {
 		scanError = nil
 	})
 
+	scan := func(reader io.Reader) {
+		scanError = scanner.Scan(reader)
+	}
+
 	scanFile := func(filename string) {
 		file, err := os.Open(filename)
 		if err != nil {
 			panic(err)
 		}
 		defer file.Close()
-		scanError = scanner.Scan(file)
+		scan(file)
 	}
 
 	itShouldHaveReturnedAnError := func() {
@@ -119,9 +124,7 @@ var _ = Describe("Scanner", func() {
 			scanFile("testres/valid_comments.obj")
 		})
 
-		It("should not have returned an error", func() {
-			Ω(scanError).ShouldNot(HaveOccurred())
-		})
+		itShouldNotHaveReturnedAnError()
 
 		It("should have scanned the comments", func() {
 			handlerFixture.AssertCommentCall("Comment at file start")
@@ -132,6 +135,76 @@ var _ = Describe("Scanner", func() {
 			handlerFixture.AssertCommentCall("Previous comment was empty. This one contain the # character twice.")
 			handlerFixture.AssertCommentCall("Comment at file end")
 			handlerFixture.AssertNoMoreCommentCalls()
+		})
+	})
+
+	Context("when a file with all kinds of vertices is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/valid_vertices.obj")
+		})
+
+		itShouldNotHaveReturnedAnError()
+
+		It("should have scanned the vertices", func() {
+			handlerFixture.AssertVertexXYZ(1.0, 1.0, -1.0)
+			handlerFixture.AssertVertexXYZW(-1.0, -1.0, 1.0, 0.5)
+			handlerFixture.AssertNoMoreVertices()
+		})
+	})
+
+	Context("when a file with all kinds of texture coordinates is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/valid_texcoords.obj")
+		})
+
+		itShouldNotHaveReturnedAnError()
+
+		It("should have scanned the texture coordinates", func() {
+			handlerFixture.AssertTexCoordU(1.6)
+			handlerFixture.AssertTexCoordUV(0.0, -0.5)
+			handlerFixture.AssertTexCoordUVW(-0.2, 1.4, 3.0)
+			handlerFixture.AssertNoMoreTexCoords()
+		})
+	})
+
+	Context("when a file with all kinds of normals is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/valid_normals.obj")
+		})
+
+		itShouldNotHaveReturnedAnError()
+
+		It("should have scanned the normals", func() {
+			handlerFixture.AssertNormal(1.0, 0.0, 0.0)
+			handlerFixture.AssertNormal(-1.0, -1.0, 1.0)
+			handlerFixture.AssertNoMoreNormals()
+		})
+	})
+
+	Context("when a file with all kinds of objects is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/valid_objects.obj")
+		})
+
+		itShouldNotHaveReturnedAnError()
+
+		It("should have scanned the objects", func() {
+			handlerFixture.AssertObject("FirstObject")
+			handlerFixture.AssertObject("LastObject")
+			handlerFixture.AssertNoMoreObjects()
+		})
+	})
+
+	Context("when a file with all kinds of faces is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/valid_faces.obj")
+		})
+
+		itShouldNotHaveReturnedAnError()
+
+		It("should have scanned them correctly", func() {
+			handlerFixture.AssertFaceCallCount(3)
+			handlerFixture.AssertCoordReferenceCallCount(12)
 		})
 	})
 
@@ -199,16 +272,51 @@ var _ = Describe("Scanner", func() {
 		})
 	})
 
-	Context("when a file with all kinds of faces is scanned", func() {
+	Context("when a file with all kinds of material libraries is scanned", func() {
 		BeforeEach(func() {
-			scanFile("testres/valid_faces.obj")
+			scanFile("testres/valid_material_libraries.obj")
 		})
 
 		itShouldNotHaveReturnedAnError()
 
-		It("should have scanned them correctly", func() {
-			handlerFixture.AssertFaceCallCount(3)
-			handlerFixture.AssertCoordReferenceCallCount(12)
+		It("should have scanned the material libraries", func() {
+			handlerFixture.AssertMaterialLibrary("valid.mtl")
+			handlerFixture.AssertMaterialLibrary("extension01.mtl")
+			handlerFixture.AssertMaterialLibrary("extension02.mtl")
+			handlerFixture.AssertNoMoreMaterialLibraries()
+		})
+	})
+
+	Context("when a file with all kinds of material references is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/valid_material_references.obj")
+		})
+
+		itShouldNotHaveReturnedAnError()
+
+		It("should have scanned the material references", func() {
+			handlerFixture.AssertMaterialReference("")
+			handlerFixture.AssertMaterialReference("MyMaterial")
+			handlerFixture.AssertNoMoreMaterialReferences()
+		})
+	})
+
+	Context("when a file with complex logical line is scanned", func() {
+		BeforeEach(func() {
+			scanFile("testres/valid_logical_line.obj")
+		})
+
+		itShouldNotHaveReturnedAnError()
+
+		It("should have scanned everything correctly", func() {
+			handlerFixture.AssertVertexXYZ(-1.0, 1.0, -2.0)
+			handlerFixture.AssertVertexXYZW(-1.0, -1.0, 1.0, 2.0)
+			handlerFixture.AssertNoMoreVertices()
+
+			handlerFixture.AssertObject("HelloWorld")
+			handlerFixture.AssertObject("NonNewLine")
+			handlerFixture.AssertObject("EndsWithNewLine")
+			handlerFixture.AssertNoMoreObjects()
 		})
 	})
 
@@ -217,9 +325,7 @@ var _ = Describe("Scanner", func() {
 			scanFile("testres/valid_unknown_command.obj")
 		})
 
-		It("should ignore it and not return an error", func() {
-			Ω(scanError).ShouldNot(HaveOccurred())
-		})
+		itShouldNotHaveReturnedAnError()
 	})
 
 	Context("when a file with insufficient vertex data is scanned", func() {
@@ -297,6 +403,15 @@ var _ = Describe("Scanner", func() {
 	Context("when a file with corrupt normal reference is scanned", func() {
 		BeforeEach(func() {
 			scanFile("testres/error_corrupt_normal_reference.obj")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when reading fails", func() {
+		BeforeEach(func() {
+			reader := new(test_helpers.FailingReader)
+			scan(reader)
 		})
 
 		itShouldHaveReturnedAnError()

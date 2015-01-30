@@ -13,6 +13,7 @@ type HandlerFixture struct {
 	vertexXCounter             int
 	vertexYCounter             int
 	vertexZCounter             int
+	vertexWCounter             int
 	texCoordStartCounter       int
 	texCoordEndCounter         int
 	texCoordUCounter           int
@@ -79,11 +80,26 @@ func (f *HandlerFixture) AssertVertexZ(expectedZ float32) {
 	f.vertexZCounter++
 }
 
+func (f *HandlerFixture) AssertVertexW(expectedW float32) {
+	Ω(f.handler.OnVertexWCallCount()).Should(BeNumerically(">", f.vertexWCounter))
+	Ω(f.handler.OnVertexWArgsForCall(f.vertexWCounter)).Should(BeNumerically("~", expectedW, 0.0001))
+	f.vertexWCounter++
+}
+
 func (f *HandlerFixture) AssertVertexXYZ(expectedX, expectedY, expectedZ float32) {
 	f.AssertVertexStart()
 	f.AssertVertexX(expectedX)
 	f.AssertVertexY(expectedY)
 	f.AssertVertexZ(expectedZ)
+	f.AssertVertexEnd()
+}
+
+func (f *HandlerFixture) AssertVertexXYZW(expectedX, expectedY, expectedZ, expectedW float32) {
+	f.AssertVertexStart()
+	f.AssertVertexX(expectedX)
+	f.AssertVertexY(expectedY)
+	f.AssertVertexZ(expectedZ)
+	f.AssertVertexW(expectedW)
 	f.AssertVertexEnd()
 }
 
@@ -97,16 +113,22 @@ func (f *HandlerFixture) AssertTexCoordStart() {
 	f.texCoordStartCounter++
 }
 
-func (f *HandlerFixture) AssertTexCoordU(expectedU float32) {
+func (f *HandlerFixture) assertTexCoordU(expectedU float32) {
 	Ω(f.handler.OnTexCoordUCallCount()).Should(BeNumerically(">", f.texCoordUCounter))
 	Ω(f.handler.OnTexCoordUArgsForCall(f.texCoordUCounter)).Should(BeNumerically("~", expectedU, 0.0001))
 	f.texCoordUCounter++
 }
 
-func (f *HandlerFixture) AssertTexCoordV(expectedV float32) {
+func (f *HandlerFixture) assertTexCoordV(expectedV float32) {
 	Ω(f.handler.OnTexCoordVCallCount()).Should(BeNumerically(">", f.texCoordVCounter))
 	Ω(f.handler.OnTexCoordVArgsForCall(f.texCoordVCounter)).Should(BeNumerically("~", expectedV, 0.0001))
 	f.texCoordVCounter++
+}
+
+func (f *HandlerFixture) assertTexCoordW(expectedW float32) {
+	Ω(f.handler.OnTexCoordWCallCount()).Should(BeNumerically(">", f.texCoordWCounter))
+	Ω(f.handler.OnTexCoordWArgsForCall(f.texCoordWCounter)).Should(BeNumerically("~", expectedW, 0.0001))
+	f.texCoordWCounter++
 }
 
 func (f *HandlerFixture) AssertTexCoordEnd() {
@@ -114,11 +136,30 @@ func (f *HandlerFixture) AssertTexCoordEnd() {
 	f.texCoordEndCounter++
 }
 
+func (f *HandlerFixture) AssertTexCoordU(expectedU float32) {
+	f.AssertTexCoordStart()
+	f.assertTexCoordU(expectedU)
+	f.AssertTexCoordEnd()
+}
+
 func (f *HandlerFixture) AssertTexCoordUV(expectedU, expectedV float32) {
 	f.AssertTexCoordStart()
-	f.AssertTexCoordU(expectedU)
-	f.AssertTexCoordV(expectedV)
+	f.assertTexCoordU(expectedU)
+	f.assertTexCoordV(expectedV)
 	f.AssertTexCoordEnd()
+}
+
+func (f *HandlerFixture) AssertTexCoordUVW(expectedU, expectedV, expectedW float32) {
+	f.AssertTexCoordStart()
+	f.assertTexCoordU(expectedU)
+	f.assertTexCoordV(expectedV)
+	f.assertTexCoordW(expectedW)
+	f.AssertTexCoordEnd()
+}
+
+func (f *HandlerFixture) AssertNoMoreTexCoords() {
+	Ω(f.handler.OnTexCoordStartCallCount()).Should(Equal(f.texCoordStartCounter))
+	Ω(f.handler.OnTexCoordEndCallCount()).Should(Equal(f.texCoordEndCounter))
 }
 
 func (f *HandlerFixture) AssertNormal(expectedX, expectedY, expectedZ float32) {
@@ -130,11 +171,19 @@ func (f *HandlerFixture) AssertNormal(expectedX, expectedY, expectedZ float32) {
 	f.normalCounter++
 }
 
+func (f *HandlerFixture) AssertNoMoreNormals() {
+	Ω(f.handler.OnNormalCallCount()).Should(Equal(f.normalCounter))
+}
+
 func (f *HandlerFixture) AssertObject(expectedName string) {
 	Ω(f.handler.OnObjectCallCount()).Should(BeNumerically(">", f.objectCounter))
 	argName := f.handler.OnObjectArgsForCall(f.objectCounter)
 	Ω(argName).Should(Equal(expectedName))
 	f.objectCounter++
+}
+
+func (f *HandlerFixture) AssertNoMoreObjects() {
+	Ω(f.handler.OnObjectCallCount()).Should(Equal(f.objectCounter))
 }
 
 func (f *HandlerFixture) AssertFaceStart() {
@@ -195,9 +244,17 @@ func (f *HandlerFixture) AssertMaterialLibrary(expectedPath string) {
 	f.materialLibraryCounter++
 }
 
+func (f *HandlerFixture) AssertNoMoreMaterialLibraries() {
+	Ω(f.handler.OnMaterialLibraryCallCount()).Should(Equal(f.materialLibraryCounter))
+}
+
 func (f *HandlerFixture) AssertMaterialReference(expectedName string) {
 	Ω(f.handler.OnMaterialReferenceCallCount()).Should(BeNumerically(">", f.materialReferenceCounter))
 	nameArg := f.handler.OnMaterialReferenceArgsForCall(f.materialReferenceCounter)
 	Ω(nameArg).Should(Equal(expectedName))
 	f.materialReferenceCounter++
+}
+
+func (f *HandlerFixture) AssertNoMoreMaterialReferences() {
+	Ω(f.handler.OnMaterialReferenceCallCount()).Should(Equal(f.materialReferenceCounter))
 }

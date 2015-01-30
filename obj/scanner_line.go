@@ -57,8 +57,10 @@ func (c *scanLine) Parse(scanner *bufio.Scanner) error {
 	c.comment = ""
 	c.segments = []string{}
 
-	logicalLine, _ := c.readLogicalLine(scanner)
-	// TODO: Handle err
+	logicalLine, err := c.readLogicalLine(scanner)
+	if err != nil {
+		return err
+	}
 
 	c.isComment = strings.HasPrefix(logicalLine, "#")
 	if c.isComment {

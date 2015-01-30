@@ -59,9 +59,11 @@ func (s *scanner) Scan(reader io.Reader) error {
 
 	scanner := bufio.NewScanner(reader)
 	for {
-		line.Parse(scanner)
-		// TODO: Handle Parse error
 		var err error
+		err = line.Parse(scanner)
+		if err != nil {
+			return err
+		}
 		switch {
 		case line.IsBlank():
 			break
@@ -128,6 +130,14 @@ func (s *scanner) processVertex(line ScanLine) error {
 	}
 	s.handler.OnVertexZ(z)
 
+	if line.ParamCount() >= 4 {
+		w, err := line.FloatParam(3)
+		if err != nil {
+			return err
+		}
+		s.handler.OnVertexW(w)
+	}
+
 	s.handler.OnVertexEnd()
 	return nil
 }
@@ -144,11 +154,21 @@ func (s *scanner) processTexCoord(line ScanLine) error {
 	}
 	s.handler.OnTexCoordU(u)
 
-	v, err := line.FloatParam(1)
-	if err != nil {
-		return err
+	if line.ParamCount() >= 2 {
+		v, err := line.FloatParam(1)
+		if err != nil {
+			return err
+		}
+		s.handler.OnTexCoordV(v)
 	}
-	s.handler.OnTexCoordV(v)
+
+	if line.ParamCount() >= 3 {
+		w, err := line.FloatParam(2)
+		if err != nil {
+			return err
+		}
+		s.handler.OnTexCoordW(w)
+	}
 
 	s.handler.OnTexCoordEnd()
 	return nil
