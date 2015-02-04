@@ -14,44 +14,8 @@ const commandFace = "f"
 const commandMaterialRef = "usemtl"
 const commandMaterialLib = "mtllib"
 
-type ScannerHandler interface {
-	OnComment(comment string) error
-	OnMaterialLibrary(path string) error
-	OnMaterialReference(name string) error
-	OnVertexStart() error
-	OnVertexX(x float32) error
-	OnVertexY(y float32) error
-	OnVertexZ(z float32) error
-	OnVertexW(w float32) error
-	OnVertexEnd() error
-	OnTexCoordStart() error
-	OnTexCoordU(u float32) error
-	OnTexCoordV(v float32) error
-	OnTexCoordW(w float32) error
-	OnTexCoordEnd() error
-	OnNormal(x, y, z float32) error
-	OnObject(name string) error
-	OnFaceStart() error
-	OnCoordReferenceStart() error
-	OnVertexIndex(index int) error
-	OnTexCoordIndex(index int) error
-	OnNormalIndex(index int) error
-	OnCoordReferenceEnd() error
-	OnFaceEnd() error
-}
-
-type Scanner interface {
-	Scan(io.Reader) error
-}
-
 type scanner struct {
 	handler ScannerHandler
-}
-
-func NewScanner(handler ScannerHandler) Scanner {
-	return &scanner{
-		handler: handler,
-	}
 }
 
 func (s *scanner) Scan(reader io.Reader) error {
