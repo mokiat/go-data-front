@@ -1,0 +1,5 @@
+firstLogical has\
+ tight separation
+secondLogical has \
+blank space separation
+thirdLogical ends with separation\

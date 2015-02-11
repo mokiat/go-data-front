@@ -1,0 +1,13 @@
+# Comment at file start
+command param1 param2 param3
+#Comment that is right next to special char
+point 1.0 0.0
+# This comment uses
+# two lines
+normal 1.0 0.0 0.0
+#
+
+object MyObject
+# Previous comment was empty. This one contains the # character twice.
+complicated 1/1/1 2/2/2 3/3/3 4/4/4
+# Comment at file end
