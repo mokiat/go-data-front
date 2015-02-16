@@ -6,38 +6,24 @@ import (
 	"github.com/momchil-atanasov/go-data-front/common"
 )
 
-// ScannerHandler interface acts as a callback that is used by the
-// MTL Scanner implementation whenever an interesting MTL feature is scanned.
-//
-// Note: All methods allow for an error to be returned. Implementations can
-// use this to stop any further scanning of the resource as well as to
-// convey that the sequence of data is not as expected.
-type ScannerHandler interface {
+// MaterialEvent indicates that a material declaration (`newmtl`) has
+// been scanned.
+type MaterialEvent struct {
 
-	// OnComment is called when a comment section has been parsed.
-	OnComment(comment string) error
-
-	// OnMaterial is called when a material declaration section has been parsed.
-	OnMaterial(name string) error
+	// MaterialName holds the name of the material in the declaration
+	MaterialName string
 }
 
-//go:generate counterfeiter -o mtl_test_fake/fake_scanner_handler.go . ScannerHandler
+// NewScanner creates a new Scanner object that can scan through
+// Wavefront MTL resources.
+func NewScanner() common.Scanner {
+	return &scanner{}
+}
 
 type scanner struct {
-	handler ScannerHandler
 }
 
-const commandMaterial = "newmtl"
-
-// NewScanner creates a new Scanner object that can scan through MTL resources
-// and trigger events whenever a feature is parsed.
-func NewScanner(handler ScannerHandler) common.Scanner {
-	return &scanner{
-		handler: handler,
-	}
-}
-
-func (s *scanner) Scan(reader io.Reader) error {
+func (s *scanner) Scan(reader io.Reader, handler common.EventHandler) error {
 	lineScanner := common.NewLineScanner(reader)
 
 	var err error
@@ -47,10 +33,10 @@ func (s *scanner) Scan(reader io.Reader) error {
 		case line.IsBlank():
 			break
 		case line.IsComment():
-			err = s.processComment(line)
+			err = s.processComment(line, handler)
 			break
 		case line.IsCommand():
-			err = s.processCommand(line)
+			err = s.processCommand(line, handler)
 			break
 		}
 		if err != nil {
@@ -64,21 +50,27 @@ func (s *scanner) Scan(reader io.Reader) error {
 	return nil
 }
 
-func (s *scanner) processComment(line common.Line) error {
-	return s.handler.OnComment(line.Comment())
+func (s *scanner) processComment(line common.Line, handler common.EventHandler) error {
+	event := common.CommentEvent{
+		Comment: line.Comment(),
+	}
+	return handler(event)
 }
 
-func (s *scanner) processCommand(line common.Line) error {
+func (s *scanner) processCommand(line common.Line, handler common.EventHandler) error {
 	switch {
-	case line.HasCommandName(commandMaterial):
-		return s.processMaterial(line)
+	case line.HasCommandName("newmtl"):
+		return s.processMaterial(line, handler)
 	default:
 		return nil
 	}
 }
 
-func (s *scanner) processMaterial(line common.Line) error {
+func (s *scanner) processMaterial(line common.Line, handler common.EventHandler) error {
 	// TODO: Test missing material name
 	name := line.StringParam(0)
-	return s.handler.OnMaterial(name)
+	event := MaterialEvent{
+		MaterialName: name,
+	}
+	return handler(event)
 }

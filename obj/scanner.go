@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-const commandComment = "v"
+const commandVertex = "v"
 const commandTexCoord = "vt"
 const commandNormal = "vn"
 const commandObject = "o"
@@ -34,7 +34,7 @@ func (s *scanner) Scan(reader io.Reader) error {
 		case line.IsComment():
 			err = s.processComment(line)
 			break
-		case line.IsCommand(commandComment):
+		case line.IsCommand(commandVertex):
 			err = s.processVertex(line)
 			break
 		case line.IsCommand(commandTexCoord):
