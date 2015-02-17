@@ -14,7 +14,10 @@ type MaterialEvent struct {
 	MaterialName string
 }
 
-type rgbColorEvent struct {
+// RGBColorEvent indicates that some type of RGB color declaration
+// has been scanned. You will likely receive a subtype of this
+// structure so should check against them.
+type RGBColorEvent struct {
 
 	// Specifies the amount of Red this color has. Usually this is in the
 	// range 0.0 to 1.0.
@@ -31,19 +34,19 @@ type rgbColorEvent struct {
 
 // RGBAmbientColorEvent indicates that an ambient color declaration (`Ka`)
 // has been scanned.
-type RGBAmbientColorEvent rgbColorEvent
+type RGBAmbientColorEvent RGBColorEvent
 
 // RGBDiffuseColorEvent indicates that a diffuse color declaration (`Kd`)
 // has been scanned.
-type RGBDiffuseColorEvent rgbColorEvent
+type RGBDiffuseColorEvent RGBColorEvent
 
 // RGBSpecularColorEvent indicates that a specular color declaration (`Ks`)
 // has been scanned.
-type RGBSpecularColorEvent rgbColorEvent
+type RGBSpecularColorEvent RGBColorEvent
 
 // RGBTransmissionFilterEvent indicates that a specular color declaration (`Tf`)
 // has been scanned.
-type RGBTransmissionFilterEvent rgbColorEvent
+type RGBTransmissionFilterEvent RGBColorEvent
 
 // DissolveEvent indicates that a dissolve declaration (`d`) has been
 // scanned.
@@ -277,7 +280,7 @@ func (s *scanner) processAmbientTexture(line common.Line, handler common.EventHa
 func (s *scanner) processDiffuseTexture(line common.Line, handler common.EventHandler) error {
 	// TODO: Handle missing params
 	path := line.StringParam(0)
-	event := AmbientTextureEvent{
+	event := DiffuseTextureEvent{
 		TexturePath: path,
 	}
 	return handler(event)

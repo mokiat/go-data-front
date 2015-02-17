@@ -57,7 +57,7 @@ var _ = Describe("Scanner", func() {
 
 	assertEvent := func(expected interface{}) {
 		Ω(len(handlerTracker.Events)).Should(BeNumerically(">", eventCounter))
-		Ω(handlerTracker.Events[eventCounter]).Should(BeEquivalentTo(expected))
+		Ω(handlerTracker.Events[eventCounter]).Should(Equal(expected))
 		eventCounter++
 	}
 
