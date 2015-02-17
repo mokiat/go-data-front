@@ -80,6 +80,47 @@ var _ = Describe("Scanner", func() {
 				assertEvent(MaterialEvent{
 					MaterialName: "MyMaterial",
 				})
+				assertEvent(RGBAmbientColorEvent{
+					R: 0.8,
+					G: 0.5,
+					B: 0.2,
+				})
+				assertEvent(RGBDiffuseColorEvent{
+					R: 0.1,
+					G: 0.4,
+					B: 0.7,
+				})
+				assertEvent(RGBSpecularColorEvent{
+					R: 0.3,
+					G: 0.2,
+					B: 1.0,
+				})
+				assertEvent(RGBTransmissionFilterEvent{
+					R: 0.6,
+					G: 0.7,
+					B: 0.8,
+				})
+				assertEvent(DissolveEvent{
+					Amount: 0.4,
+				})
+				assertEvent(SpecularExponentEvent{
+					Amount: 330.0,
+				})
+				assertEvent(AmbientTextureEvent{
+					TexturePath: "textures/ambient.bmp",
+				})
+				assertEvent(DiffuseTextureEvent{
+					TexturePath: "textures/diffuse.bmp",
+				})
+				assertEvent(SpecularTextureEvent{
+					TexturePath: "textures/specular.bmp",
+				})
+				assertEvent(SpecularExponentTextureEvent{
+					TexturePath: "textures/specular_exponent.bmp",
+				})
+				assertEvent(DissolveTextureEvent{
+					TexturePath: "textures/dissolve.bmp",
+				})
 				assertNoMoreEvents()
 			})
 		})
