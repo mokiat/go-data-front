@@ -1,6 +1,7 @@
 package mtl
 
 import (
+	"errors"
 	"io"
 
 	"github.com/momchil-atanasov/go-data-front/common"
@@ -16,7 +17,7 @@ type MaterialEvent struct {
 
 // RGBColorEvent indicates that some type of RGB color declaration
 // has been scanned. You will likely receive a subtype of this
-// structure so should check against them.
+// structure so you will likely need to do a type-switch.
 type RGBColorEvent struct {
 
 	// Specifies the amount of Red this color has. Usually this is in the
@@ -67,7 +68,10 @@ type SpecularExponentEvent struct {
 	Amount float64
 }
 
-type textureEvent struct {
+// TextureEvent indicates that a texture declaration has been scanned.
+// You will likely receive a subtype of this structure so you will likely
+// need to type-switch on this.
+type TextureEvent struct {
 
 	// TexturePath specifies the location of the texture on the filesystem.
 	TexturePath string
@@ -75,23 +79,23 @@ type textureEvent struct {
 
 // AmbientTextureEvent indicates that an ambient texture declaration (`map_Ka`)
 // has been scanned.
-type AmbientTextureEvent textureEvent
+type AmbientTextureEvent TextureEvent
 
 // DiffuseTextureEvent indicates that a diffuse texture declaration (`map_Kd`)
 // has been scanned.
-type DiffuseTextureEvent textureEvent
+type DiffuseTextureEvent TextureEvent
 
 // SpecularTextureEvent indicates that a specular texture declaration (`map_Ks`)
 // has been scanned.
-type SpecularTextureEvent textureEvent
+type SpecularTextureEvent TextureEvent
 
 // SpecularExponentTextureEvent indicates that a specular exponent texture
 // declaration (`map_Ns`) has been scanned.
-type SpecularExponentTextureEvent textureEvent
+type SpecularExponentTextureEvent TextureEvent
 
 // DissolveTextureEvent indicates that a dissolve texture
 // declaration (`map_d`) has been scanned.
-type DissolveTextureEvent textureEvent
+type DissolveTextureEvent TextureEvent
 
 // NewScanner creates a new Scanner object that can scan through
 // Wavefront MTL resources.
@@ -137,6 +141,8 @@ func (s *scanner) processComment(line common.Line, handler common.EventHandler) 
 }
 
 func (s *scanner) processCommand(line common.Line, handler common.EventHandler) error {
+	// XXX: NOTE: There is no need to have RColorEvents as the Spec states that if only
+	// r is specified, g and b equal that. So you can just reuse RGB events.
 	switch {
 	case line.HasCommandName("newmtl"):
 		return s.processMaterial(line, handler)
@@ -168,7 +174,9 @@ func (s *scanner) processCommand(line common.Line, handler common.EventHandler) 
 }
 
 func (s *scanner) processMaterial(line common.Line, handler common.EventHandler) error {
-	// TODO: Test missing material name
+	if line.ParamCount() < 1 {
+		return errors.New("Material declaration lacks name!")
+	}
 	name := line.StringParam(0)
 	event := MaterialEvent{
 		MaterialName: name,
@@ -177,81 +185,93 @@ func (s *scanner) processMaterial(line common.Line, handler common.EventHandler)
 }
 
 func (s *scanner) processAmbientColor(line common.Line, handler common.EventHandler) error {
-	// TODO: Handle other scenarios
-	if line.ParamCount() != 3 {
-		panic("Not supported!")
+	if line.ParamCount() < 1 {
+		return errors.New("Ambient color declaration lacks parameters!")
 	}
 
-	// TODO: Handle err
-	r, _ := line.FloatParam(0)
-	g, _ := line.FloatParam(1)
-	b, _ := line.FloatParam(2)
-	event := RGBAmbientColorEvent{
-		R: r,
-		G: g,
-		B: b,
+	// TODO: Handle other scenarios
+	event, err := s.getRGBColorEvent(line)
+	if err != nil {
+		return err
 	}
-	return handler(event)
+	return handler(RGBAmbientColorEvent(event))
 }
 
 func (s *scanner) processDiffuseColor(line common.Line, handler common.EventHandler) error {
-	// TODO: Handle other scenarios
-	if line.ParamCount() != 3 {
-		panic("Not supported!")
+	if line.ParamCount() < 1 {
+		return errors.New("Diffuse color declaration lacks parameters!")
 	}
 
-	// TODO: Handle err
-	r, _ := line.FloatParam(0)
-	g, _ := line.FloatParam(1)
-	b, _ := line.FloatParam(2)
-	event := RGBDiffuseColorEvent{
-		R: r,
-		G: g,
-		B: b,
+	// TODO: Handle other scenarios
+	event, err := s.getRGBColorEvent(line)
+	if err != nil {
+		return err
 	}
-	return handler(event)
+	return handler(RGBDiffuseColorEvent(event))
 }
 
 func (s *scanner) processSpecularColor(line common.Line, handler common.EventHandler) error {
-	// TODO: Handle other scenarios
-	if line.ParamCount() != 3 {
-		panic("Not supported!")
+	if line.ParamCount() < 1 {
+		return errors.New("Specular color declaration lacks parameters!")
 	}
 
-	// TODO: Handle err
-	r, _ := line.FloatParam(0)
-	g, _ := line.FloatParam(1)
-	b, _ := line.FloatParam(2)
-	event := RGBSpecularColorEvent{
-		R: r,
-		G: g,
-		B: b,
+	// TODO: Handle other scenarios
+	event, err := s.getRGBColorEvent(line)
+	if err != nil {
+		return err
 	}
-	return handler(event)
+	return handler(RGBSpecularColorEvent(event))
 }
 
 func (s *scanner) processTransmissionFilter(line common.Line, handler common.EventHandler) error {
-	// TODO: Handle other scenarios
-	if line.ParamCount() != 3 {
-		panic("Not supported!")
+	if line.ParamCount() < 3 {
+		return errors.New("Transmission filter declaration lacks parameters!")
 	}
 
-	// TODO: Handle err
-	r, _ := line.FloatParam(0)
-	g, _ := line.FloatParam(1)
-	b, _ := line.FloatParam(2)
-	event := RGBTransmissionFilterEvent{
-		R: r,
-		G: g,
-		B: b,
+	event, err := s.getRGBColorEvent(line)
+	if err != nil {
+		return err
 	}
-	return handler(event)
+	return handler(RGBTransmissionFilterEvent(event))
+}
+
+func (s *scanner) getRGBColorEvent(line common.Line) (RGBColorEvent, error) {
+	var err error
+	var event RGBColorEvent
+
+	event.R, err = line.FloatParam(0)
+	if err != nil {
+		return RGBColorEvent{}, err
+	}
+
+	if line.ParamCount() >= 3 {
+		// TODO: Test this!
+		event.G, err = line.FloatParam(1)
+		if err != nil {
+			return RGBColorEvent{}, err
+		}
+
+		event.B, err = line.FloatParam(2)
+		if err != nil {
+			return RGBColorEvent{}, err
+		}
+	} else {
+		// TODO: Test this scenario
+		event.G = event.R
+		event.B = event.R
+	}
+
+	return event, nil
 }
 
 func (s *scanner) processDissolve(line common.Line, handler common.EventHandler) error {
-	// TODO: Handle missing params
-	// TODO: Handle err
-	amount, _ := line.FloatParam(0)
+	if line.ParamCount() < 1 {
+		return errors.New("Dissolve declaration lacks value parameter!")
+	}
+	amount, err := line.FloatParam(0)
+	if err != nil {
+		return err
+	}
 	event := DissolveEvent{
 		Amount: amount,
 	}
@@ -259,9 +279,13 @@ func (s *scanner) processDissolve(line common.Line, handler common.EventHandler)
 }
 
 func (s *scanner) processSpecularExponent(line common.Line, handler common.EventHandler) error {
-	// TODO: Handle missing params
-	// TODO: Handle err
-	amount, _ := line.FloatParam(0)
+	if line.ParamCount() < 1 {
+		return errors.New("Specular exponent declaration lacks value parameter!")
+	}
+	amount, err := line.FloatParam(0)
+	if err != nil {
+		return err
+	}
 	event := SpecularExponentEvent{
 		Amount: amount,
 	}
@@ -269,47 +293,64 @@ func (s *scanner) processSpecularExponent(line common.Line, handler common.Event
 }
 
 func (s *scanner) processAmbientTexture(line common.Line, handler common.EventHandler) error {
-	// TODO: Handle missing params
-	path := line.StringParam(0)
-	event := AmbientTextureEvent{
-		TexturePath: path,
+	if line.ParamCount() < 1 {
+		return errors.New("Ambient texture declaration lacks filename parameter!")
 	}
-	return handler(event)
+	event, err := s.getTextureEvent(line)
+	if err != nil {
+		return err
+	}
+	return handler(AmbientTextureEvent(event))
 }
 
 func (s *scanner) processDiffuseTexture(line common.Line, handler common.EventHandler) error {
-	// TODO: Handle missing params
-	path := line.StringParam(0)
-	event := DiffuseTextureEvent{
-		TexturePath: path,
+	if line.ParamCount() < 1 {
+		return errors.New("Diffuse texture declaration lacks filename parameter!")
 	}
-	return handler(event)
+	event, err := s.getTextureEvent(line)
+	if err != nil {
+		return err
+	}
+	return handler(DiffuseTextureEvent(event))
 }
 
 func (s *scanner) processSpecularTexture(line common.Line, handler common.EventHandler) error {
-	// TODO: Handle missing params
-	path := line.StringParam(0)
-	event := SpecularTextureEvent{
-		TexturePath: path,
+	if line.ParamCount() < 1 {
+		return errors.New("Specular texture declaration lacks filename parameter!")
 	}
-	return handler(event)
+	event, err := s.getTextureEvent(line)
+	if err != nil {
+		return err
+	}
+	return handler(SpecularTextureEvent(event))
 }
 
 func (s *scanner) processSpecularExponentTexture(line common.Line, handler common.EventHandler) error {
-	// TODO: Handle missing params
-	path := line.StringParam(0)
-	event := SpecularExponentTextureEvent{
-		TexturePath: path,
+	if line.ParamCount() < 1 {
+		return errors.New("Specular exponent texture declaration lacks filename parameter!")
 	}
-	return handler(event)
+	event, err := s.getTextureEvent(line)
+	if err != nil {
+		return err
+	}
+	return handler(SpecularExponentTextureEvent(event))
 }
 
 func (s *scanner) processDissolveTexture(line common.Line, handler common.EventHandler) error {
-	// TODO: Handle missing params
+	if line.ParamCount() < 1 {
+		return errors.New("Dissolve texture declaration lacks filename parameter!")
+	}
+	event, err := s.getTextureEvent(line)
+	if err != nil {
+		return err
+	}
+	return handler(DissolveTextureEvent(event))
+}
+
+func (s *scanner) getTextureEvent(line common.Line) (TextureEvent, error) {
 	path := line.StringParam(0)
-	orig := textureEvent{
+	event := TextureEvent{
 		TexturePath: path,
 	}
-	event := DissolveTextureEvent(orig)
-	return handler(event)
+	return event, nil
 }
