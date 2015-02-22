@@ -24,6 +24,12 @@ var _ = Describe("Decoder", func() {
 		library, decodeErr = decoder.Decode(file)
 	}
 
+	itShouldHaveReturnedAnError := func() {
+		It("should have returned an error", func() {
+			Ω(decodeErr).Should(HaveOccurred())
+		})
+	}
+
 	itShouldNotHaveReturnedAnError := func() {
 		It("should not have returned an error", func() {
 			Ω(decodeErr).ShouldNot(HaveOccurred())
@@ -122,7 +128,7 @@ var _ = Describe("Decoder", func() {
 	})
 
 	Context("when a file with multiple materials is decoded", func() {
-		BeforeEach(func() {
+		JustBeforeEach(func() {
 			decodeFile("valid_multiple_materials.mtl")
 		})
 
@@ -133,5 +139,104 @@ var _ = Describe("Decoder", func() {
 			Ω(library.Materials[0].Name).Should(Equal("FirstMaterial"))
 			Ω(library.Materials[1].Name).Should(Equal("SecondMaterial"))
 		})
+
+		Context("when the number of materials is larger than the limit", func() {
+			BeforeEach(func() {
+				limits := DecodeLimits{
+					MaxMaterialCount: 1,
+				}
+				decoder = NewDecoder(limits)
+			})
+
+			itShouldHaveReturnedAnError()
+		})
+	})
+
+	Context("when decoding ambient color without material", func() {
+		BeforeEach(func() {
+			decodeFile("error_ambient_color_no_material.mtl")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when decoding diffuse color without material", func() {
+		BeforeEach(func() {
+			decodeFile("error_diffuse_color_no_material.mtl")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when decoding specular color without material", func() {
+		BeforeEach(func() {
+			decodeFile("error_specular_color_no_material.mtl")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when decoding transmission filter without material", func() {
+		BeforeEach(func() {
+			decodeFile("error_transmission_filter_no_material.mtl")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when decoding specular exponent without material", func() {
+		BeforeEach(func() {
+			decodeFile("error_specular_exponent_no_material.mtl")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when decoding dissolve without material", func() {
+		BeforeEach(func() {
+			decodeFile("error_dissolve_no_material.mtl")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when decoding ambient texture without material", func() {
+		BeforeEach(func() {
+			decodeFile("error_ambient_texture_no_material.mtl")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when decoding diffuse texture without material", func() {
+		BeforeEach(func() {
+			decodeFile("error_diffuse_texture_no_material.mtl")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when decoding specular texture without material", func() {
+		BeforeEach(func() {
+			decodeFile("error_specular_texture_no_material.mtl")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when decoding specular exponent texture without material", func() {
+		BeforeEach(func() {
+			decodeFile("error_specular_exponent_texture_no_material.mtl")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when decoding dissolve texture without material", func() {
+		BeforeEach(func() {
+			decodeFile("error_dissolve_texture_no_material.mtl")
+		})
+
+		itShouldHaveReturnedAnError()
 	})
 })

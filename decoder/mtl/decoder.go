@@ -1,6 +1,7 @@
 package mtl
 
 import (
+	"errors"
 	"io"
 
 	"github.com/momchil-atanasov/go-data-front/common"
@@ -16,7 +17,7 @@ type DecodeLimits struct {
 
 	// MaxMaterialCount specifies the maximum number of
 	// material declarations that can be parsed.
-	MaxMaterialCount int64
+	MaxMaterialCount int
 }
 
 // Decoder is an API that allows one to decode MTL
@@ -34,16 +35,18 @@ type Decoder interface {
 // specified DecodeLimits.
 func NewDecoder(limits DecodeLimits) Decoder {
 	return &decoder{
+		limits:  &limits,
 		scanner: scanMTL.NewScanner(),
 	}
 }
 
 type decoder struct {
+	limits  *DecodeLimits
 	scanner common.Scanner
 }
 
 func (d *decoder) Decode(reader io.Reader) (*Library, error) {
-	context := newDecodeContext()
+	context := newDecodeContext(d.limits)
 	err := d.scanner.Scan(reader, context.HandleEvent)
 	if err != nil {
 		return nil, err
@@ -51,14 +54,16 @@ func (d *decoder) Decode(reader io.Reader) (*Library, error) {
 	return context.Library, nil
 }
 
-func newDecodeContext() *decodeContext {
+func newDecodeContext(limits *DecodeLimits) *decodeContext {
 	return &decodeContext{
+		Limits:          limits,
 		Library:         new(Library),
 		CurrentMaterial: nil,
 	}
 }
 
 type decodeContext struct {
+	Limits          *DecodeLimits
 	Library         *Library
 	CurrentMaterial *Material
 }
@@ -94,7 +99,9 @@ func (c *decodeContext) HandleEvent(event common.Event) error {
 }
 
 func (c *decodeContext) handleMaterial(event scanMTL.MaterialEvent) error {
-	// TODO: Check limits!!!
+	if len(c.Library.Materials) >= c.Limits.MaxMaterialCount {
+		return errors.New("Max number of allowed materials reached!")
+	}
 	c.CurrentMaterial = DefaultMaterial()
 	c.CurrentMaterial.Name = event.MaterialName
 	c.Library.Materials = append(c.Library.Materials, c.CurrentMaterial)
@@ -102,7 +109,9 @@ func (c *decodeContext) handleMaterial(event scanMTL.MaterialEvent) error {
 }
 
 func (c *decodeContext) handleAmbientColor(event scanMTL.RGBAmbientColorEvent) error {
-	// TODO: Verify there is a current material
+	if c.CurrentMaterial == nil {
+		return c.newMissingMaterialError()
+	}
 	c.CurrentMaterial.AmbientColor = RGBColor{
 		R: event.R,
 		G: event.G,
@@ -112,7 +121,9 @@ func (c *decodeContext) handleAmbientColor(event scanMTL.RGBAmbientColorEvent) e
 }
 
 func (c *decodeContext) handleDiffuseColor(event scanMTL.RGBDiffuseColorEvent) error {
-	// TODO: Verify there is a current material
+	if c.CurrentMaterial == nil {
+		return c.newMissingMaterialError()
+	}
 	c.CurrentMaterial.DiffuseColor = RGBColor{
 		R: event.R,
 		G: event.G,
@@ -122,7 +133,9 @@ func (c *decodeContext) handleDiffuseColor(event scanMTL.RGBDiffuseColorEvent) e
 }
 
 func (c *decodeContext) handleSpecularColor(event scanMTL.RGBSpecularColorEvent) error {
-	// TODO: Verify there is a current material
+	if c.CurrentMaterial == nil {
+		return c.newMissingMaterialError()
+	}
 	c.CurrentMaterial.SpecularColor = RGBColor{
 		R: event.R,
 		G: event.G,
@@ -132,7 +145,9 @@ func (c *decodeContext) handleSpecularColor(event scanMTL.RGBSpecularColorEvent)
 }
 
 func (c *decodeContext) handleTransmissionFilter(event scanMTL.RGBTransmissionFilterEvent) error {
-	// TODO: Verify there is a current material
+	if c.CurrentMaterial == nil {
+		return c.newMissingMaterialError()
+	}
 	c.CurrentMaterial.TransmissionFilter = RGBColor{
 		R: event.R,
 		G: event.G,
@@ -142,43 +157,61 @@ func (c *decodeContext) handleTransmissionFilter(event scanMTL.RGBTransmissionFi
 }
 
 func (c *decodeContext) handleSpecularExponent(event scanMTL.SpecularExponentEvent) error {
-	// TODO: Verify there is a current material
+	if c.CurrentMaterial == nil {
+		return c.newMissingMaterialError()
+	}
 	c.CurrentMaterial.SpecularExponent = event.Amount
 	return nil
 }
 
 func (c *decodeContext) handleDissolve(event scanMTL.DissolveEvent) error {
-	// TODO: Verify there is a current material
+	if c.CurrentMaterial == nil {
+		return c.newMissingMaterialError()
+	}
 	c.CurrentMaterial.Dissolve = event.Amount
 	return nil
 }
 
 func (c *decodeContext) handleAmbientTexture(event scanMTL.AmbientTextureEvent) error {
-	// TODO: Verify there is a current material
+	if c.CurrentMaterial == nil {
+		return c.newMissingMaterialError()
+	}
 	c.CurrentMaterial.AmbientTexture = event.TexturePath
 	return nil
 }
 
 func (c *decodeContext) handleDiffuseTexture(event scanMTL.DiffuseTextureEvent) error {
-	// TODO: Verify there is a current material
+	if c.CurrentMaterial == nil {
+		return c.newMissingMaterialError()
+	}
 	c.CurrentMaterial.DiffuseTexture = event.TexturePath
 	return nil
 }
 
 func (c *decodeContext) handleSpecularTexture(event scanMTL.SpecularTextureEvent) error {
-	// TODO: Verify there is a current material
+	if c.CurrentMaterial == nil {
+		return c.newMissingMaterialError()
+	}
 	c.CurrentMaterial.SpecularTexture = event.TexturePath
 	return nil
 }
 
 func (c *decodeContext) handleSpecularExponentTexture(event scanMTL.SpecularExponentTextureEvent) error {
-	// TODO: Verify there is a current material
+	if c.CurrentMaterial == nil {
+		return c.newMissingMaterialError()
+	}
 	c.CurrentMaterial.SpecularExponentTexture = event.TexturePath
 	return nil
 }
 
 func (c *decodeContext) handleDissolveTexture(event scanMTL.DissolveTextureEvent) error {
-	// TODO: Verify there is a current material
+	if c.CurrentMaterial == nil {
+		return c.newMissingMaterialError()
+	}
 	c.CurrentMaterial.DissolveTexture = event.TexturePath
 	return nil
+}
+
+func (c *decodeContext) newMissingMaterialError() error {
+	return errors.New("Declaration requires a material to be defined first.")
 }
