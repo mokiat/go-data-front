@@ -95,8 +95,8 @@ type Material struct {
 
 // DefaultMaterial returns a new Material which is
 // initialized with some proper default values
-func DefaultMaterial() Material {
-	return Material{
+func DefaultMaterial() *Material {
+	return &Material{
 		AmbientColor: RGBColor{
 			R: 1.0,
 			G: 1.0,
@@ -114,4 +114,27 @@ func DefaultMaterial() Material {
 			B: 1.0,
 		},
 	}
+}
+
+// Library represents a material library.
+//
+// A material library can be though of as a
+// single MTL resource which can contain information
+// on multiple materials.
+type Library struct {
+
+	// Materials contains a list of all the materials that
+	// were defined in the given library.
+	Materials []*Material
+}
+
+// FindMaterial finds a material in the given Library
+// with the specified name or returns false, otherwise.
+func (l *Library) FindMaterial(name string) (*Material, bool) {
+	for _, material := range l.Materials {
+		if material.Name == name {
+			return material, true
+		}
+	}
+	return nil, false
 }

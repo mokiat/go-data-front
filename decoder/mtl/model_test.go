@@ -9,7 +9,7 @@ import (
 
 var _ = Describe("Model", func() {
 	Describe("DefaultMaterial", func() {
-		var material Material
+		var material *Material
 
 		BeforeEach(func() {
 			material = DefaultMaterial()
@@ -41,6 +41,44 @@ var _ = Describe("Model", func() {
 				G: 1.0,
 				B: 1.0,
 			}))
+		})
+	})
+
+	Describe("Library", func() {
+		var library *Library
+
+		BeforeEach(func() {
+			library = new(Library)
+		})
+
+		Context("when library has multiple materials", func() {
+			var blueMaterial *Material
+			var redMaterial *Material
+
+			BeforeEach(func() {
+				blueMaterial = &Material{
+					Name: "Blue",
+				}
+				redMaterial = &Material{
+					Name: "Red",
+				}
+				library.Materials = []*Material{blueMaterial, redMaterial}
+			})
+
+			It("is possible to find existing material by name", func() {
+				material, found := library.FindMaterial("Blue")
+				Ω(found).Should(BeTrue())
+				Ω(material).Should(Equal(blueMaterial))
+
+				material, found = library.FindMaterial("Red")
+				Ω(found).Should(BeTrue())
+				Ω(material).Should(Equal(redMaterial))
+			})
+
+			It("is will not find unexisting materials", func() {
+				_, found := library.FindMaterial("Green")
+				Ω(found).Should(BeFalse())
+			})
 		})
 	})
 })
