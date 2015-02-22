@@ -141,8 +141,6 @@ func (s *scanner) processComment(line common.Line, handler common.EventHandler) 
 }
 
 func (s *scanner) processCommand(line common.Line, handler common.EventHandler) error {
-	// XXX: NOTE: There is no need to have RColorEvents as the Spec states that if only
-	// r is specified, g and b equal that. So you can just reuse RGB events.
 	switch {
 	case line.HasCommandName("newmtl"):
 		return s.processMaterial(line, handler)
@@ -188,8 +186,9 @@ func (s *scanner) processAmbientColor(line common.Line, handler common.EventHand
 	if line.ParamCount() < 1 {
 		return errors.New("Ambient color declaration lacks parameters!")
 	}
-
-	// TODO: Handle other scenarios
+	if s.isSpectralColor(line) || s.isXYZColor(line) {
+		return nil
+	}
 	event, err := s.getRGBColorEvent(line)
 	if err != nil {
 		return err
@@ -201,8 +200,9 @@ func (s *scanner) processDiffuseColor(line common.Line, handler common.EventHand
 	if line.ParamCount() < 1 {
 		return errors.New("Diffuse color declaration lacks parameters!")
 	}
-
-	// TODO: Handle other scenarios
+	if s.isSpectralColor(line) || s.isXYZColor(line) {
+		return nil
+	}
 	event, err := s.getRGBColorEvent(line)
 	if err != nil {
 		return err
@@ -214,8 +214,9 @@ func (s *scanner) processSpecularColor(line common.Line, handler common.EventHan
 	if line.ParamCount() < 1 {
 		return errors.New("Specular color declaration lacks parameters!")
 	}
-
-	// TODO: Handle other scenarios
+	if s.isSpectralColor(line) || s.isXYZColor(line) {
+		return nil
+	}
 	event, err := s.getRGBColorEvent(line)
 	if err != nil {
 		return err
@@ -227,12 +228,22 @@ func (s *scanner) processTransmissionFilter(line common.Line, handler common.Eve
 	if line.ParamCount() < 3 {
 		return errors.New("Transmission filter declaration lacks parameters!")
 	}
-
+	if s.isSpectralColor(line) || s.isXYZColor(line) {
+		return nil
+	}
 	event, err := s.getRGBColorEvent(line)
 	if err != nil {
 		return err
 	}
 	return handler(RGBTransmissionFilterEvent(event))
+}
+
+func (s *scanner) isSpectralColor(line common.Line) bool {
+	return line.StringParam(0) == "spectral"
+}
+
+func (s *scanner) isXYZColor(line common.Line) bool {
+	return line.StringParam(0) == "xyz"
 }
 
 func (s *scanner) getRGBColorEvent(line common.Line) (RGBColorEvent, error) {
@@ -245,7 +256,6 @@ func (s *scanner) getRGBColorEvent(line common.Line) (RGBColorEvent, error) {
 	}
 
 	if line.ParamCount() >= 3 {
-		// TODO: Test this!
 		event.G, err = line.FloatParam(1)
 		if err != nil {
 			return RGBColorEvent{}, err
@@ -256,7 +266,6 @@ func (s *scanner) getRGBColorEvent(line common.Line) (RGBColorEvent, error) {
 			return RGBColorEvent{}, err
 		}
 	} else {
-		// TODO: Test this scenario
 		event.G = event.R
 		event.B = event.R
 	}

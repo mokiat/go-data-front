@@ -61,6 +61,12 @@ var _ = Describe("Scanner", func() {
 		})
 	}
 
+	itShouldHaveReturnedHandlerError := func() {
+		It("should have returned handler error", func() {
+			Ω(scanErr).Should(Equal(errorHandlerErr))
+		})
+	}
+
 	assertEvent := func(expected interface{}) {
 		Ω(len(handlerTracker.Events)).Should(BeNumerically(">", eventCounter))
 		Ω(handlerTracker.Events[eventCounter]).Should(Equal(expected))
@@ -126,6 +132,121 @@ var _ = Describe("Scanner", func() {
 			assertEvent(DissolveTextureEvent{
 				TexturePath: "textures/dissolve.bmp",
 			})
+			assertNoMoreEvents()
+		})
+	})
+
+	Context("when reading all kinds of ambient colors", func() {
+		BeforeEach(func() {
+			scanFile("valid_ambient_colors.mtl", trackedHandler)
+		})
+
+		itShouldNotHaveReturnedAnError()
+
+		It("should have scanned all the colors", func() {
+			assertEvent(RGBAmbientColorEvent{
+				R: 0.3,
+				G: 0.3,
+				B: 0.3,
+			})
+			assertEvent(RGBAmbientColorEvent{
+				R: 0.2,
+				G: 0.2,
+				B: 0.2,
+			})
+			assertEvent(RGBAmbientColorEvent{
+				R: 0.5,
+				G: 0.6,
+				B: 0.7,
+			})
+			assertNoMoreEvents()
+		})
+	})
+
+	Context("when reading all kinds of diffuse colors", func() {
+		BeforeEach(func() {
+			scanFile("valid_diffuse_colors.mtl", trackedHandler)
+		})
+
+		itShouldNotHaveReturnedAnError()
+
+		It("should have scanned all the colors", func() {
+			assertEvent(RGBDiffuseColorEvent{
+				R: 0.3,
+				G: 0.3,
+				B: 0.3,
+			})
+			assertEvent(RGBDiffuseColorEvent{
+				R: 0.2,
+				G: 0.2,
+				B: 0.2,
+			})
+			assertEvent(RGBDiffuseColorEvent{
+				R: 0.5,
+				G: 0.6,
+				B: 0.7,
+			})
+			assertNoMoreEvents()
+		})
+	})
+
+	Context("when reading all kinds of specular colors", func() {
+		BeforeEach(func() {
+			scanFile("valid_specular_colors.mtl", trackedHandler)
+		})
+
+		itShouldNotHaveReturnedAnError()
+
+		It("should have scanned all the colors", func() {
+			assertEvent(RGBSpecularColorEvent{
+				R: 0.3,
+				G: 0.3,
+				B: 0.3,
+			})
+			assertEvent(RGBSpecularColorEvent{
+				R: 0.2,
+				G: 0.2,
+				B: 0.2,
+			})
+			assertEvent(RGBSpecularColorEvent{
+				R: 0.5,
+				G: 0.6,
+				B: 0.7,
+			})
+			assertNoMoreEvents()
+		})
+	})
+
+	Context("when reading all kinds of transmission filters", func() {
+		BeforeEach(func() {
+			scanFile("valid_transmission_filters.mtl", trackedHandler)
+		})
+
+		itShouldNotHaveReturnedAnError()
+
+		It("should have scanned all the filters", func() {
+			assertEvent(RGBTransmissionFilterEvent{
+				R: 0.5,
+				G: 0.6,
+				B: 0.7,
+			})
+			assertEvent(RGBTransmissionFilterEvent{
+				R: 0.1,
+				G: 0.9,
+				B: 0.2,
+			})
+			assertNoMoreEvents()
+		})
+	})
+
+	Context("when reading unsupported declarations", func() {
+		BeforeEach(func() {
+			scanFile("valid_unsupported_declarations.mtl", trackedHandler)
+		})
+
+		itShouldNotHaveReturnedAnError()
+
+		It("should not have scanned anything", func() {
 			assertNoMoreEvents()
 		})
 	})
@@ -274,7 +395,93 @@ var _ = Describe("Scanner", func() {
 		itShouldHaveReturnedAnError()
 	})
 
-	// TODO: Handle handler errors
+	Context("when handler returns error on ambient colors", func() {
+		BeforeEach(func() {
+			scanFile("valid_ambient_colors.mtl", errorHandler)
+		})
+
+		itShouldHaveReturnedHandlerError()
+	})
+
+	Context("when handler returns error on diffuse colors", func() {
+		BeforeEach(func() {
+			scanFile("valid_diffuse_colors.mtl", errorHandler)
+		})
+
+		itShouldHaveReturnedHandlerError()
+	})
+
+	Context("when handler returns error on specular colors", func() {
+		BeforeEach(func() {
+			scanFile("valid_specular_colors.mtl", errorHandler)
+		})
+
+		itShouldHaveReturnedHandlerError()
+	})
+
+	Context("when handler returns error on transmission filters", func() {
+		BeforeEach(func() {
+			scanFile("valid_transmission_filters.mtl", errorHandler)
+		})
+
+		itShouldHaveReturnedHandlerError()
+	})
+
+	Context("when handler returns error on dissolves", func() {
+		BeforeEach(func() {
+			scanFile("valid_dissolves.mtl", errorHandler)
+		})
+
+		itShouldHaveReturnedHandlerError()
+	})
+
+	Context("when handler returns error on specular exponents", func() {
+		BeforeEach(func() {
+			scanFile("valid_specular_exponents.mtl", errorHandler)
+		})
+
+		itShouldHaveReturnedHandlerError()
+	})
+
+	Context("when handler returns error on ambient textures", func() {
+		BeforeEach(func() {
+			scanFile("valid_ambient_textures.mtl", errorHandler)
+		})
+
+		itShouldHaveReturnedHandlerError()
+	})
+
+	Context("when handler returns error on diffuse textures", func() {
+		BeforeEach(func() {
+			scanFile("valid_diffuse_textures.mtl", errorHandler)
+		})
+
+		itShouldHaveReturnedHandlerError()
+	})
+
+	Context("when handler returns error on specular textures", func() {
+		BeforeEach(func() {
+			scanFile("valid_specular_textures.mtl", errorHandler)
+		})
+
+		itShouldHaveReturnedHandlerError()
+	})
+
+	Context("when handler returns error on specular exponent textures", func() {
+		BeforeEach(func() {
+			scanFile("valid_specular_exponent_textures.mtl", errorHandler)
+		})
+
+		itShouldHaveReturnedHandlerError()
+	})
+
+	Context("when handler returns error on dissolve textures", func() {
+		BeforeEach(func() {
+			scanFile("valid_dissolve_textures.mtl", errorHandler)
+		})
+
+		itShouldHaveReturnedHandlerError()
+	})
 
 	Context("when reading fails", func() {
 		var readerErr error
