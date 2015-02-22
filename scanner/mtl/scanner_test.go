@@ -8,7 +8,7 @@ import (
 
 	"github.com/momchil-atanasov/go-data-front/common"
 	. "github.com/momchil-atanasov/go-data-front/common/common_test_help"
-	. "github.com/momchil-atanasov/go-data-front/mtl"
+	. "github.com/momchil-atanasov/go-data-front/scanner/mtl"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
