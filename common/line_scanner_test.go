@@ -180,6 +180,7 @@ var _ = Describe("LineScanner", func() {
 		var stringParams Line
 		var intParams Line
 		var floatParams Line
+		var referencesParams Line
 
 		BeforeEach(func() {
 			openForScanning("line_scanner_parameters.txt")
@@ -188,6 +189,7 @@ var _ = Describe("LineScanner", func() {
 			stringParams = readNextLine()
 			intParams = readNextLine()
 			floatParams = readNextLine()
+			referencesParams = readNextLine()
 			assertNoMoreLines()
 		})
 
@@ -276,6 +278,107 @@ var _ = Describe("LineScanner", func() {
 			value, err = intParams.FloatParam(1)
 			Ω(err).ShouldNot(HaveOccurred())
 			Ω(value).Should(BeNumerically("~", -50))
+		})
+
+		It("can scan reference sets when strings", func() {
+			referenceSet, err := stringParams.ReferenceSetParam(0)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(referenceSet.Count()).Should(Equal(1))
+			Ω(referenceSet.StringReference(0)).Should(Equal("hello"))
+		})
+
+		It("can scan reference sets when ints", func() {
+			referenceSet, err := intParams.ReferenceSetParam(0)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(referenceSet.Count()).Should(Equal(1))
+			Ω(referenceSet.StringReference(0)).Should(Equal("3"))
+		})
+
+		It("can scan reference sets when floats", func() {
+			referenceSet, err := floatParams.ReferenceSetParam(0)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(referenceSet.Count()).Should(Equal(1))
+			Ω(referenceSet.StringReference(0)).Should(Equal("1.0"))
+		})
+
+		Describe("ReferenceSet", func() {
+			var singleReferenceSet ReferenceSet
+			var doubleReferenceSet ReferenceSet
+			var trippleReferenceSet ReferenceSet
+			var skipReferenceSet ReferenceSet
+
+			BeforeEach(func() {
+				var err error
+				singleReferenceSet, err = referencesParams.ReferenceSetParam(0)
+				Ω(err).ShouldNot(HaveOccurred())
+				doubleReferenceSet, err = referencesParams.ReferenceSetParam(1)
+				Ω(err).ShouldNot(HaveOccurred())
+				trippleReferenceSet, err = referencesParams.ReferenceSetParam(2)
+				Ω(err).ShouldNot(HaveOccurred())
+				skipReferenceSet, err = referencesParams.ReferenceSetParam(3)
+				Ω(err).ShouldNot(HaveOccurred())
+			})
+
+			It("can parse single references", func() {
+				Ω(singleReferenceSet.Count()).Should(Equal(1))
+				Ω(singleReferenceSet.StringReference(0)).Should(Equal("1"))
+			})
+
+			It("can parse double references", func() {
+				Ω(doubleReferenceSet.Count()).Should(Equal(2))
+				Ω(doubleReferenceSet.StringReference(0)).Should(Equal("2"))
+				Ω(doubleReferenceSet.StringReference(1)).Should(Equal("3"))
+			})
+
+			It("can parse trippe references", func() {
+				Ω(trippleReferenceSet.Count()).Should(Equal(3))
+				Ω(trippleReferenceSet.StringReference(0)).Should(Equal("4"))
+				Ω(trippleReferenceSet.StringReference(1)).Should(Equal("abc"))
+				Ω(trippleReferenceSet.StringReference(2)).Should(Equal("6"))
+			})
+
+			It("can parse skip references", func() {
+				Ω(skipReferenceSet.Count()).Should(Equal(3))
+				Ω(skipReferenceSet.StringReference(0)).Should(Equal("7.3"))
+				Ω(skipReferenceSet.IsBlank(0)).Should(BeFalse())
+				Ω(skipReferenceSet.StringReference(1)).Should(Equal(""))
+				Ω(skipReferenceSet.IsBlank(1)).Should(BeTrue())
+				Ω(skipReferenceSet.StringReference(2)).Should(Equal("8"))
+				Ω(skipReferenceSet.IsBlank(2)).Should(BeFalse())
+			})
+
+			It("can return int reference when int", func() {
+				reference, err := singleReferenceSet.IntReference(0)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(reference).Should(Equal(int64(1)))
+			})
+
+			It("cannot return int reference when string", func() {
+				_, err := trippleReferenceSet.IntReference(1)
+				Ω(err).Should(HaveOccurred())
+			})
+
+			It("cannot return int reference when float", func() {
+				_, err := skipReferenceSet.IntReference(0)
+				Ω(err).Should(HaveOccurred())
+			})
+
+			It("can return float reference when float", func() {
+				reference, err := skipReferenceSet.FloatReference(0)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(reference).Should(Equal(float64(7.3)))
+			})
+
+			It("can return float reference when int", func() {
+				reference, err := singleReferenceSet.FloatReference(0)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(reference).Should(Equal(float64(1.0)))
+			})
+
+			It("cannot return float reference when string", func() {
+				_, err := trippleReferenceSet.FloatReference(1)
+				Ω(err).Should(HaveOccurred())
+			})
 		})
 	})
 

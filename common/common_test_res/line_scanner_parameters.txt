@@ -3,3 +3,4 @@ none
 strings hello complex/param "quoted" ?123?
 ints 3 -50
 floats 1.0 -13.33 .3
+refs 1 2/3 4/abc/6 7.3//8

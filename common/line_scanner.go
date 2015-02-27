@@ -9,6 +9,56 @@ import (
 	"strings"
 )
 
+// ReferenceSet represents a set of references.
+// This is represented in a Wavefront through a list of
+// values separated by `/` symbols. It is possible to have
+// blank references.
+type ReferenceSet struct {
+	// contains filtered or unexported fields
+	segments []string
+}
+
+// Count returns the number of references in this
+// reference set
+func (s ReferenceSet) Count() int {
+	return len(s.segments)
+}
+
+// IsBlank returns whether the reference at the specified
+// index position is blank. (e.g. the reference at index 1
+// in a//c is blank)
+func (s ReferenceSet) IsBlank(index int) bool {
+	return s.StringReference(index) == ""
+}
+
+// StringReference returns the reference at the specified
+// index location as string
+func (s ReferenceSet) StringReference(index int) string {
+	return s.segments[index]
+}
+
+// IntReference returns the reference at the specified
+// index location as int if possible to convert, otherwise
+// it returns an error
+func (s ReferenceSet) IntReference(index int) (int64, error) {
+	value, err := strconv.ParseInt(s.StringReference(index), 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return value, nil
+}
+
+// FloatReference returns the reference at the specified index
+// location as float if possible to convert, otherwise it
+// returns an error
+func (s ReferenceSet) FloatReference(index int) (float64, error) {
+	value, err := strconv.ParseFloat(s.StringReference(index), 64)
+	if err != nil {
+		return 0.0, err
+	}
+	return value, nil
+}
+
 // Line represents a single logical line in a Wavefront file.
 // You should get a hold of such a structure through the use of the
 // LineScanner API.
@@ -85,6 +135,19 @@ func (l Line) FloatParam(index int) (float64, error) {
 		return 0.0, err
 	}
 	return value, nil
+}
+
+// ReferenceSetParam returns the parameter converted into a
+// ReferenceSet
+func (l Line) ReferenceSetParam(index int) (ReferenceSet, error) {
+	segments := strings.Split(l.StringParam(index), "/")
+	for i, segment := range segments {
+		segments[i] = strings.TrimSpace(segment)
+	}
+	set := ReferenceSet{
+		segments: segments,
+	}
+	return set, nil
 }
 
 // LineScanner is an API that allows one to scan Wavefront files
