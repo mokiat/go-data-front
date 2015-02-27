@@ -139,7 +139,7 @@ func (l Line) FloatParam(index int) (float64, error) {
 
 // ReferenceSetParam returns the parameter converted into a
 // ReferenceSet
-func (l Line) ReferenceSetParam(index int) (ReferenceSet, error) {
+func (l Line) ReferenceSetParam(index int) ReferenceSet {
 	segments := strings.Split(l.StringParam(index), "/")
 	for i, segment := range segments {
 		segments[i] = strings.TrimSpace(segment)
@@ -147,7 +147,7 @@ func (l Line) ReferenceSetParam(index int) (ReferenceSet, error) {
 	set := ReferenceSet{
 		segments: segments,
 	}
-	return set, nil
+	return set
 }
 
 // LineScanner is an API that allows one to scan Wavefront files

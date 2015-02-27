@@ -131,6 +131,41 @@ var _ = Describe("Scanner", func() {
 			assertEvent(MaterialReferenceEvent{
 				MaterialName: "BlueMaterial",
 			})
+			assertEvent(FaceStartEvent{})
+			assertEvent(ReferenceSetStartEvent{})
+			assertEvent(VertexReferenceEvent{
+				VertexIndex: 1,
+			})
+			assertEvent(TexCoordReferenceEvent{
+				TexCoordIndex: 4,
+			})
+			assertEvent(NormalReferenceEvent{
+				NormalIndex: 1,
+			})
+			assertEvent(ReferenceSetEndEvent{})
+			assertEvent(ReferenceSetStartEvent{})
+			assertEvent(VertexReferenceEvent{
+				VertexIndex: 2,
+			})
+			assertEvent(TexCoordReferenceEvent{
+				TexCoordIndex: 1,
+			})
+			assertEvent(NormalReferenceEvent{
+				NormalIndex: 1,
+			})
+			assertEvent(ReferenceSetEndEvent{})
+			assertEvent(ReferenceSetStartEvent{})
+			assertEvent(VertexReferenceEvent{
+				VertexIndex: 3,
+			})
+			assertEvent(TexCoordReferenceEvent{
+				TexCoordIndex: 3,
+			})
+			assertEvent(NormalReferenceEvent{
+				NormalIndex: 2,
+			})
+			assertEvent(ReferenceSetEndEvent{})
+			assertEvent(FaceEndEvent{})
 			assertNoMoreEvents()
 		})
 	})

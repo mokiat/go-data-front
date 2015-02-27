@@ -101,6 +101,57 @@ type MaterialReferenceEvent struct {
 	MaterialName string
 }
 
+// FaceStartEvent indicates that a face declaration (`f`) is being
+// scanned.
+//
+// Events that follow will concern that specific face up until the
+// point a FaceEndEvent is thrown.
+type FaceStartEvent struct {
+}
+
+// FaceEndEvent indicates that the scanning of the face declaration
+// has completed.
+type FaceEndEvent struct {
+}
+
+// ReferenceSetStartEvent indicates that a reference set (e.g. 1/2/3)
+// is being parsed as part of face scanning.
+//
+// Events that follow will contain reference data, until a
+// ReferenceSetEndEvent is received.
+type ReferenceSetStartEvent struct {
+}
+
+// ReferenceSetEndEvent indicates that the scanning of the reference
+// set has completed.
+type ReferenceSetEndEvent struct {
+}
+
+// VertexReferenceEvent indicates that a vertex reference has been
+// scanned.
+type VertexReferenceEvent struct {
+
+	// VertexIndex holds the index of the vertex that is referenced
+	VertexIndex int64
+}
+
+// TexCoordReferenceEvent indicates that a texture coordinate reference
+// has been scanned.
+type TexCoordReferenceEvent struct {
+
+	// TexCoordIndex holds the index of the texture coordinate that
+	// is referenced.
+	TexCoordIndex int64
+}
+
+// NormalReferenceEvent indicates that a normal reference has been
+// scanned.
+type NormalReferenceEvent struct {
+
+	// NormalIndex holds the index of the normal that is referenced.
+	NormalIndex int64
+}
+
 // NewScanner creates a new Scanner object that can scan through
 // Wavefront OBJ resources.
 func NewScanner() common.Scanner {
@@ -158,6 +209,8 @@ func (s *scanner) processCommand(line common.Line, handler common.EventHandler) 
 		return s.processObject(line, handler)
 	case line.HasCommandName("usemtl"):
 		return s.processMaterialReference(line, handler)
+	case line.HasCommandName("f"):
+		return s.processFace(line, handler)
 	default:
 		return nil
 	}
@@ -281,4 +334,61 @@ func (s *scanner) processMaterialReference(line common.Line, handler common.Even
 		}
 		return handler(event)
 	}
+}
+
+func (s *scanner) processFace(line common.Line, handler common.EventHandler) error {
+	err := handler(FaceStartEvent{})
+	if err != nil {
+		return err
+	}
+
+	for i := 0; i < line.ParamCount(); i++ {
+		err := s.processReferenceSet(line.ReferenceSetParam(i), handler)
+		if err != nil {
+			return err
+		}
+	}
+
+	return handler(FaceEndEvent{})
+}
+
+func (s *scanner) processReferenceSet(referenceSet common.ReferenceSet, handler common.EventHandler) error {
+	err := handler(ReferenceSetStartEvent{})
+	if err != nil {
+		return err
+	}
+
+	if referenceSet.Count() == 0 {
+		return errors.New("Reference set has no references.")
+	}
+
+	vertexIndex, err := referenceSet.IntReference(0)
+	if err != nil {
+		return err
+	}
+	handler(VertexReferenceEvent{
+		VertexIndex: vertexIndex,
+	})
+
+	if (referenceSet.Count() > 1) && !referenceSet.IsBlank(1) {
+		texCoordIndex, err := referenceSet.IntReference(1)
+		if err != nil {
+			return err
+		}
+		handler(TexCoordReferenceEvent{
+			TexCoordIndex: texCoordIndex,
+		})
+	}
+
+	if (referenceSet.Count() > 2) && !referenceSet.IsBlank(2) {
+		normalIndex, err := referenceSet.IntReference(2)
+		if err != nil {
+			return err
+		}
+		handler(NormalReferenceEvent{
+			NormalIndex: normalIndex,
+		})
+	}
+
+	return handler(ReferenceSetEndEvent{})
 }

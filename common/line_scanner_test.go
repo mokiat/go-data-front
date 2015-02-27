@@ -281,22 +281,19 @@ var _ = Describe("LineScanner", func() {
 		})
 
 		It("can scan reference sets when strings", func() {
-			referenceSet, err := stringParams.ReferenceSetParam(0)
-			Ω(err).ShouldNot(HaveOccurred())
+			referenceSet := stringParams.ReferenceSetParam(0)
 			Ω(referenceSet.Count()).Should(Equal(1))
 			Ω(referenceSet.StringReference(0)).Should(Equal("hello"))
 		})
 
 		It("can scan reference sets when ints", func() {
-			referenceSet, err := intParams.ReferenceSetParam(0)
-			Ω(err).ShouldNot(HaveOccurred())
+			referenceSet := intParams.ReferenceSetParam(0)
 			Ω(referenceSet.Count()).Should(Equal(1))
 			Ω(referenceSet.StringReference(0)).Should(Equal("3"))
 		})
 
 		It("can scan reference sets when floats", func() {
-			referenceSet, err := floatParams.ReferenceSetParam(0)
-			Ω(err).ShouldNot(HaveOccurred())
+			referenceSet := floatParams.ReferenceSetParam(0)
 			Ω(referenceSet.Count()).Should(Equal(1))
 			Ω(referenceSet.StringReference(0)).Should(Equal("1.0"))
 		})
@@ -308,15 +305,10 @@ var _ = Describe("LineScanner", func() {
 			var skipReferenceSet ReferenceSet
 
 			BeforeEach(func() {
-				var err error
-				singleReferenceSet, err = referencesParams.ReferenceSetParam(0)
-				Ω(err).ShouldNot(HaveOccurred())
-				doubleReferenceSet, err = referencesParams.ReferenceSetParam(1)
-				Ω(err).ShouldNot(HaveOccurred())
-				trippleReferenceSet, err = referencesParams.ReferenceSetParam(2)
-				Ω(err).ShouldNot(HaveOccurred())
-				skipReferenceSet, err = referencesParams.ReferenceSetParam(3)
-				Ω(err).ShouldNot(HaveOccurred())
+				singleReferenceSet = referencesParams.ReferenceSetParam(0)
+				doubleReferenceSet = referencesParams.ReferenceSetParam(1)
+				trippleReferenceSet = referencesParams.ReferenceSetParam(2)
+				skipReferenceSet = referencesParams.ReferenceSetParam(3)
 			})
 
 			It("can parse single references", func() {
