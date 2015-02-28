@@ -24,7 +24,7 @@ type DecodeLimits struct {
 // Wavefront resources into an object model.
 type Decoder interface {
 
-	// Decode decodes the MTL Wavefron resource, specified
+	// Decode decodes the MTL Wavefront resource, specified
 	// through the io.Reader, into a Library model.
 	//
 	// If decoding fails for some reason, an error is returned.
