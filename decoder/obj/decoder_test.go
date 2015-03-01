@@ -11,6 +11,7 @@ import (
 )
 
 var _ = Describe("Decoder", func() {
+	var limits DecodeLimits
 	var decoder Decoder
 	var model *Model
 	var decodeErr error
@@ -21,6 +22,7 @@ var _ = Describe("Decoder", func() {
 			panic(err)
 		}
 		defer file.Close()
+		decoder = NewDecoder(limits)
 		model, decodeErr = decoder.Decode(file)
 	}
 
@@ -37,14 +39,7 @@ var _ = Describe("Decoder", func() {
 	}
 
 	BeforeEach(func() {
-		limits := DecodeLimits{
-			MaxVertexCount:          256,
-			MaxTexCoordCount:        256,
-			MaxNormalCount:          256,
-			MaxObjectCount:          256,
-			MaxMaterialLibraryCount: 256,
-		}
-		decoder = NewDecoder(limits)
+		limits = DefaultLimits()
 	})
 
 	Context("when a basic file is decoded", func() {
@@ -169,10 +164,7 @@ var _ = Describe("Decoder", func() {
 
 		Context("when the number of objects is larger than the limit", func() {
 			BeforeEach(func() {
-				limits := DecodeLimits{
-					MaxObjectCount: 1,
-				}
-				decoder = NewDecoder(limits)
+				limits.MaxObjectCount = 1
 			})
 
 			itShouldHaveReturnedAnError()
@@ -198,10 +190,7 @@ var _ = Describe("Decoder", func() {
 
 		Context("when the number of vertices is larger than the limit", func() {
 			BeforeEach(func() {
-				limits := DecodeLimits{
-					MaxVertexCount: 1,
-				}
-				decoder = NewDecoder(limits)
+				limits.MaxVertexCount = 1
 			})
 
 			itShouldHaveReturnedAnError()
@@ -230,10 +219,7 @@ var _ = Describe("Decoder", func() {
 
 		Context("when the number of texture coordinates is larger than the limit", func() {
 			BeforeEach(func() {
-				limits := DecodeLimits{
-					MaxTexCoordCount: 1,
-				}
-				decoder = NewDecoder(limits)
+				limits.MaxTexCoordCount = 1
 			})
 
 			itShouldHaveReturnedAnError()
@@ -259,10 +245,7 @@ var _ = Describe("Decoder", func() {
 
 		Context("when the number of normals is larger than the limit", func() {
 			BeforeEach(func() {
-				limits := DecodeLimits{
-					MaxNormalCount: 1,
-				}
-				decoder = NewDecoder(limits)
+				limits.MaxNormalCount = 1
 			})
 
 			itShouldHaveReturnedAnError()
@@ -285,13 +268,93 @@ var _ = Describe("Decoder", func() {
 
 		Context("when the number of material libraries is larger than the limit", func() {
 			BeforeEach(func() {
-				limits := DecodeLimits{
-					MaxMaterialLibraryCount: 1,
-				}
-				decoder = NewDecoder(limits)
+				limits.MaxMaterialLibraryCount = 1
 			})
 
 			itShouldHaveReturnedAnError()
+		})
+	})
+
+	Context("when a file with multiple material references is scanned", func() {
+		JustBeforeEach(func() {
+			decodeFile("valid_material_references.obj")
+		})
+
+		itShouldNotHaveReturnedAnError()
+
+		It("should have decoded all material references", func() {
+			object := model.Objects[0]
+			Ω(object.Meshes).Should(HaveLen(2))
+			Ω(object.Meshes[0].MaterialName).Should(Equal("Red"))
+			Ω(object.Meshes[1].MaterialName).Should(Equal("Blue"))
+		})
+
+		Context("when the number of material references is larger than the limit", func() {
+			BeforeEach(func() {
+				limits.MaxMaterialReferenceCount = 1
+			})
+
+			itShouldHaveReturnedAnError()
+		})
+	})
+
+	Context("when a file with multiple faces is scanned", func() {
+		JustBeforeEach(func() {
+			decodeFile("valid_faces.obj")
+		})
+
+		itShouldNotHaveReturnedAnError()
+
+		It("should have decoded all faces", func() {
+			mesh := model.Objects[0].Meshes[0]
+			Ω(mesh.Faces).Should(HaveLen(2))
+		})
+
+		Context("when the number of faces is larger than the limit", func() {
+			BeforeEach(func() {
+				limits.MaxFaceCount = 1
+			})
+
+			itShouldHaveReturnedAnError()
+		})
+	})
+
+	Context("when a file with multiple references is scanned", func() {
+		JustBeforeEach(func() {
+			decodeFile("valid_references.obj")
+		})
+
+		itShouldNotHaveReturnedAnError()
+
+		It("should have decoded all faces", func() {
+			face := model.Objects[0].Meshes[0].Faces[0]
+			Ω(face.References).Should(HaveLen(4))
+		})
+
+		Context("when the number of faces is larger than the limit", func() {
+			BeforeEach(func() {
+				limits.MaxReferenceCount = 1
+			})
+
+			itShouldHaveReturnedAnError()
+		})
+	})
+
+	Context("when an object with duplicate materials is scanned", func() {
+		JustBeforeEach(func() {
+			limits.MaxMaterialReferenceCount = 2
+			decodeFile("valid_mesh_reuse.obj")
+		})
+
+		itShouldNotHaveReturnedAnError()
+
+		It("should have parsed only two meshes", func() {
+			object := model.Objects[0]
+			Ω(object.Meshes).Should(HaveLen(2))
+			Ω(object.Meshes[0].MaterialName).Should(Equal("First"))
+			Ω(object.Meshes[0].Faces).Should(HaveLen(2))
+			Ω(object.Meshes[1].MaterialName).Should(Equal("Second"))
+			Ω(object.Meshes[1].Faces).Should(HaveLen(1))
 		})
 	})
 
@@ -376,5 +439,45 @@ var _ = Describe("Decoder", func() {
 		})
 
 		itShouldHaveReturnedAnError()
+	})
+
+	Describe("Default DecodeLimits", func() {
+		var limits DecodeLimits
+
+		BeforeEach(func() {
+			limits = DefaultLimits()
+		})
+
+		It("vertex limit should be 65536", func() {
+			Ω(limits.MaxVertexCount).Should(Equal(65536))
+		})
+
+		It("normal limit should be 65536", func() {
+			Ω(limits.MaxNormalCount).Should(Equal(65536))
+		})
+
+		It("tex coord limit should be 65536", func() {
+			Ω(limits.MaxTexCoordCount).Should(Equal(65536))
+		})
+
+		It("object limit should be 1024", func() {
+			Ω(limits.MaxObjectCount).Should(Equal(1024))
+		})
+
+		It("face limit should be 65536", func() {
+			Ω(limits.MaxFaceCount).Should(Equal(65536))
+		})
+
+		It("reference limit should be 16", func() {
+			Ω(limits.MaxReferenceCount).Should(Equal(16))
+		})
+
+		It("material reference limit should be 64", func() {
+			Ω(limits.MaxMaterialReferenceCount).Should(Equal(64))
+		})
+
+		It("material library limit should be 32", func() {
+			Ω(limits.MaxMaterialLibraryCount).Should(Equal(32))
+		})
 	})
 })

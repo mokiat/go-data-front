@@ -49,6 +49,44 @@ var _ = Describe("Model", func() {
 		})
 	})
 
+	Describe("Object", func() {
+		var object *Object
+
+		BeforeEach(func() {
+			object = new(Object)
+		})
+
+		Context("when object has multiple meshes", func() {
+			var firstMesh *Mesh
+			var secondMesh *Mesh
+
+			BeforeEach(func() {
+				firstMesh = &Mesh{
+					MaterialName: "First",
+				}
+				secondMesh = &Mesh{
+					MaterialName: "Second",
+				}
+				object.Meshes = append(object.Meshes, firstMesh, secondMesh)
+			})
+
+			It("is possible to find mesh by material name", func() {
+				mesh, found := object.FindMesh("First")
+				Ω(found).Should(BeTrue())
+				Ω(mesh).Should(Equal(firstMesh))
+
+				mesh, found = object.FindMesh("Second")
+				Ω(found).Should(BeTrue())
+				Ω(mesh).Should(Equal(secondMesh))
+			})
+
+			It("will not find unexisting meshes", func() {
+				_, found := object.FindMesh("Missing")
+				Ω(found).Should(BeFalse())
+			})
+		})
+	})
+
 	Describe("Model", func() {
 		var model *Model
 

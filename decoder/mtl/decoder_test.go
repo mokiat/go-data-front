@@ -12,6 +12,7 @@ import (
 
 var _ = Describe("Decoder", func() {
 	var decoder Decoder
+	var limits DecodeLimits
 	var library *Library
 	var decodeErr error
 
@@ -21,6 +22,7 @@ var _ = Describe("Decoder", func() {
 			panic(err)
 		}
 		defer file.Close()
+		decoder = NewDecoder(limits)
 		library, decodeErr = decoder.Decode(file)
 	}
 
@@ -37,10 +39,7 @@ var _ = Describe("Decoder", func() {
 	}
 
 	BeforeEach(func() {
-		limits := DecodeLimits{
-			MaxMaterialCount: 256,
-		}
-		decoder = NewDecoder(limits)
+		limits = DefaultLimits()
 	})
 
 	Context("when a basic file is decoded", func() {
@@ -142,10 +141,7 @@ var _ = Describe("Decoder", func() {
 
 		Context("when the number of materials is larger than the limit", func() {
 			BeforeEach(func() {
-				limits := DecodeLimits{
-					MaxMaterialCount: 1,
-				}
-				decoder = NewDecoder(limits)
+				limits.MaxMaterialCount = 1
 			})
 
 			itShouldHaveReturnedAnError()
@@ -238,5 +234,17 @@ var _ = Describe("Decoder", func() {
 		})
 
 		itShouldHaveReturnedAnError()
+	})
+
+	Describe("Default DecodeLimits", func() {
+		var limits DecodeLimits
+
+		BeforeEach(func() {
+			limits = DefaultLimits()
+		})
+
+		It("material limit should be 512", func() {
+			Ω(limits.MaxMaterialCount).Should(Equal(512))
+		})
 	})
 })

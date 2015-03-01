@@ -20,6 +20,14 @@ type DecodeLimits struct {
 	MaxMaterialCount int
 }
 
+// DefaultLimits returns some default DecodeLimits.
+// Users can take the result and modify specific parameters.
+func DefaultLimits() DecodeLimits {
+	return DecodeLimits{
+		MaxMaterialCount: 512,
+	}
+}
+
 // Decoder is an API that allows one to decode MTL
 // Wavefront resources into an object model.
 type Decoder interface {

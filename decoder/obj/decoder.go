@@ -31,10 +31,38 @@ type DecodeLimits struct {
 	// that can be parsed before an error is thrown.
 	MaxObjectCount int
 
+	// MaxFaceCount specifies the maximum number of faces
+	// that can be parsed per mesh before an error is thrown.
+	MaxFaceCount int
+
+	// MaxReferenceCount specifies the maximum number of vertex
+	// references that a given face can have.
+	MaxReferenceCount int
+
 	// MaxMaterialLibraryCount specifies the maximum number of
 	// material library references that can be parsed before
 	// an error is thrown.
 	MaxMaterialLibraryCount int
+
+	// MaxMaterialReferenceCount specifies the maximum number of
+	// material references that can be parsed per object before
+	// an error is thrown.
+	MaxMaterialReferenceCount int
+}
+
+// DefaultLimits returns some default DecodeLimits.
+// Users can take the result and modify specific parameters.
+func DefaultLimits() DecodeLimits {
+	return DecodeLimits{
+		MaxVertexCount:            65536,
+		MaxTexCoordCount:          65536,
+		MaxNormalCount:            65536,
+		MaxObjectCount:            1024,
+		MaxFaceCount:              65536,
+		MaxReferenceCount:         16,
+		MaxMaterialReferenceCount: 64,
+		MaxMaterialLibraryCount:   32,
+	}
 }
 
 // Decoder is an API that allows one to decode OBJ
@@ -178,14 +206,25 @@ func (c *decodeContext) handleObject(event scanOBJ.ObjectEvent) error {
 
 func (c *decodeContext) handleMaterialReference(event scanOBJ.MaterialReferenceEvent) error {
 	c.assureCurrentObject()
-	c.CurrentMesh = new(Mesh)
-	c.CurrentMesh.MaterialName = event.MaterialName
-	c.CurrentObject.Meshes = append(c.CurrentObject.Meshes, c.CurrentMesh)
+	mesh, found := c.CurrentObject.FindMesh(event.MaterialName)
+	if found {
+		c.CurrentMesh = mesh
+	} else {
+		if len(c.CurrentObject.Meshes) >= c.Limits.MaxMaterialReferenceCount {
+			return errors.New("Maximum number of material references reached!")
+		}
+		c.CurrentMesh = new(Mesh)
+		c.CurrentMesh.MaterialName = event.MaterialName
+		c.CurrentObject.Meshes = append(c.CurrentObject.Meshes, c.CurrentMesh)
+	}
 	return nil
 }
 
 func (c *decodeContext) handleFaceStart() error {
 	c.assureCurrentMesh()
+	if len(c.CurrentMesh.Faces) >= c.Limits.MaxFaceCount {
+		return errors.New("Maximum number of faces reached!")
+	}
 	c.CurrentFace = new(Face)
 	return nil
 }
@@ -199,6 +238,9 @@ func (c *decodeContext) handleFaceEnd() error {
 }
 
 func (c *decodeContext) handleReferencesStart() error {
+	if len(c.CurrentFace.References) >= c.Limits.MaxReferenceCount {
+		return errors.New("Maximum number of vertex references reached!")
+	}
 	c.CurrentReference = &Reference{
 		TexCoordIndex: UndefinedIndex,
 		NormalIndex:   UndefinedIndex,

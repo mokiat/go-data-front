@@ -106,6 +106,18 @@ type Object struct {
 	Meshes []*Mesh
 }
 
+// FindMesh is a helper function that allows one to
+// find a Mesh within an Object by searching by
+// its material name
+func (o *Object) FindMesh(materialName string) (*Mesh, bool) {
+	for _, mesh := range o.Meshes {
+		if mesh.MaterialName == materialName {
+			return mesh, true
+		}
+	}
+	return nil, false
+}
+
 // Mesh is a concept that cannot be directly mapped
 // to OBJ specification. It is here to allow for the
 // separation of mesh data based on material.

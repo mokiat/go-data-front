@@ -1,0 +1,7 @@
+o Object
+usemtl First
+f 1 2 3
+usemtl Second
+f 2 3 4
+usemtl First
+f 3 4 5
