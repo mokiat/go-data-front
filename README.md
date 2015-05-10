@@ -1,5 +1,7 @@
 # Go Library for Wavefront file parsing
 
+![](https://travis-ci.org/momchil-atanasov/go-data-front.svg?branch=master)
+
 A Go library for reading Wavefront 3D model resources (OBJ, MTL).
 
 ## User's Guide
