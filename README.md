@@ -1,6 +1,6 @@
 # Go Library for Wavefront file parsing
 
-![](https://travis-ci.org/momchil-atanasov/go-data-front.svg?branch=master)
+[![Build Status](https://travis-ci.org/momchil-atanasov/go-data-front.png)](https://travis-ci.org/momchil-atanasov/go-data-front)
 
 A Go library for reading Wavefront 3D model resources (OBJ, MTL).
 
@@ -145,22 +145,12 @@ You can find the API documentation **[here](https://godoc.org/github.com/momchil
 
 ## Developer's Guide
 
-You will need the following libraries to build this project.
-
-* **[Ginkgo](https://github.com/onsi/ginkgo)** - Test framework for Go
-* **[Gomega](https://github.com/onsi/gomega)** - Matcher framework for Go
-* **[Counterfeiter](https://github.com/maxbrunsfeld/counterfeiter)** - Mocking framework for Go
+This library uses the **[Ginkgo](https://github.com/onsi/ginkgo)** tool for testing. You will need to set it up.
 
 You can run all the tests with the following command.
 
 ```bash
 ginkgo -r
-```
-
-You can regenerate all mocks with the following command.
-
-```bash
-go generate ./...
 ```
 
 ## Notes
