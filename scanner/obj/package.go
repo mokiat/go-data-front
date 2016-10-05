@@ -1,4 +1,4 @@
-// obj package provides APIs through which one can parse Wavefront OBJ
+// Package obj provides APIs through which one can parse Wavefront OBJ
 // resources.
 // The OBJ file format is quite common and is used to store 3D model data.
 //

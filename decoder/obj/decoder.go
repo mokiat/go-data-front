@@ -76,6 +76,8 @@ type Decoder interface {
 	Decode(io.Reader) (*Model, error)
 }
 
+// NewDecoder creates a new Decoder instance with the
+// specified DecodeLimits.
 func NewDecoder(limits DecodeLimits) Decoder {
 	return &decoder{
 		limits:  &limits,

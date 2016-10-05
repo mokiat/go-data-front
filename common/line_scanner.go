@@ -114,12 +114,12 @@ func (l Line) ParamCount() int {
 	return count
 }
 
-// Returns the parameter, converted to a string, at the specified index
+// StringParam returns the parameter, converted to a string, at the specified index
 func (l Line) StringParam(index int) string {
 	return l.segments[index+1]
 }
 
-// Returns the parameter, converted to an integer, at the specified index
+// IntParam returns the parameter, converted to an integer, at the specified index
 func (l Line) IntParam(index int) (int64, error) {
 	value, err := strconv.ParseInt(l.StringParam(index), 10, 64)
 	if err != nil {
@@ -128,7 +128,7 @@ func (l Line) IntParam(index int) (int64, error) {
 	return value, nil
 }
 
-// Returns the parameter, converted to a float, at the specified index
+// FloatParam returns the parameter, converted to a float, at the specified index
 func (l Line) FloatParam(index int) (float64, error) {
 	value, err := strconv.ParseFloat(l.StringParam(index), 64)
 	if err != nil {

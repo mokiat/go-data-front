@@ -322,18 +322,11 @@ func (s *scanner) processObject(line common.Line, handler common.EventHandler) e
 }
 
 func (s *scanner) processMaterialReference(line common.Line, handler common.EventHandler) error {
+	event := MaterialReferenceEvent{}
 	if line.ParamCount() > 0 {
-		name := line.StringParam(0)
-		event := MaterialReferenceEvent{
-			MaterialName: name,
-		}
-		return handler(event)
-	} else {
-		event := MaterialReferenceEvent{
-			MaterialName: "",
-		}
-		return handler(event)
+		event.MaterialName = line.StringParam(0)
 	}
+	return handler(event)
 }
 
 func (s *scanner) processFace(line common.Line, handler common.EventHandler) error {

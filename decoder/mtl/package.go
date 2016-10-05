@@ -1,4 +1,4 @@
-// mtl package provides APIs through which one can parse Wavefront MTL
+// Package mtl provides APIs through which one can parse Wavefront MTL
 // resources.
 // The MTL file format is quite common and is used to store material data
 // for OBJ 3D models.
