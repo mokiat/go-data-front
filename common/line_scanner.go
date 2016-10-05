@@ -104,7 +104,7 @@ func (l Line) CommandName() string {
 }
 
 // ParamCount returns the number of parameters provided with the current
-// command. Parameters are indexed from `0` upto the number (excluding)
+// command. Parameters are indexed from `0` up to the number (excluding)
 // returned by this function.
 func (l Line) ParamCount() int {
 	count := len(l.segments) - 1

@@ -270,7 +270,7 @@ var _ = Describe("LineScanner", func() {
 			Ω(err).Should(HaveOccurred())
 		})
 
-		It("can scan float paramters when ints", func() {
+		It("can scan float parameters when ints", func() {
 			value, err := intParams.FloatParam(0)
 			Ω(err).ShouldNot(HaveOccurred())
 			Ω(value).Should(BeNumerically("~", 3))
