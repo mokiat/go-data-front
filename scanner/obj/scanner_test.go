@@ -17,8 +17,6 @@ import (
 var _ = Describe("Scanner", func() {
 	var handlerTracker *EventHandlerTracker
 	var trackedHandler common.EventHandler
-	var errorHandlerErr error
-	var errorHandler common.EventHandler
 	var scanErr error
 	var scanner common.Scanner
 	var eventCounter int
@@ -27,11 +25,6 @@ var _ = Describe("Scanner", func() {
 		handlerTracker = new(EventHandlerTracker)
 		trackedHandler = handlerTracker.Handle
 		eventCounter = 0
-
-		errorHandlerErr = errors.New("Handler returned error!")
-		errorHandler = func(event common.Event) error {
-			return errorHandlerErr
-		}
 
 		scanErr = nil
 		scanner = NewScanner()
