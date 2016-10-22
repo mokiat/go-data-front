@@ -45,6 +45,10 @@ type RGBDiffuseColorEvent RGBColorEvent
 // has been scanned.
 type RGBSpecularColorEvent RGBColorEvent
 
+// RGBEmissiveColorEvent indicates that a specular color declaration (`Ke`)
+// has been scanned.
+type RGBEmissiveColorEvent RGBColorEvent
+
 // RGBTransmissionFilterEvent indicates that a specular color declaration (`Tf`)
 // has been scanned.
 type RGBTransmissionFilterEvent RGBColorEvent
@@ -89,6 +93,10 @@ type DiffuseTextureEvent TextureEvent
 // has been scanned.
 type SpecularTextureEvent TextureEvent
 
+// EmissiveTextureEvent indicates that a specular texture declaration (`map_Ke`)
+// has been scanned.
+type EmissiveTextureEvent TextureEvent
+
 // SpecularExponentTextureEvent indicates that a specular exponent texture
 // declaration (`map_Ns`) has been scanned.
 type SpecularExponentTextureEvent TextureEvent
@@ -96,6 +104,10 @@ type SpecularExponentTextureEvent TextureEvent
 // DissolveTextureEvent indicates that a dissolve texture
 // declaration (`map_d`) has been scanned.
 type DissolveTextureEvent TextureEvent
+
+// NormalTextureEvent indicates that a specular texture declaration (`map_Bump`)
+// has been scanned.
+type NormalTextureEvent TextureEvent
 
 // NewScanner creates a new Scanner object that can scan through
 // Wavefront MTL resources.
@@ -150,6 +162,8 @@ func (s *scanner) processCommand(line common.Line, handler common.EventHandler) 
 		return s.processDiffuseColor(line, handler)
 	case line.HasCommandName("Ks"):
 		return s.processSpecularColor(line, handler)
+	case line.HasCommandName("Ke"):
+		return s.processEmissiveColor(line, handler)
 	case line.HasCommandName("Tf"):
 		return s.processTransmissionFilter(line, handler)
 	case line.HasCommandName("d"):
@@ -162,10 +176,14 @@ func (s *scanner) processCommand(line common.Line, handler common.EventHandler) 
 		return s.processDiffuseTexture(line, handler)
 	case line.HasCommandName("map_Ks"):
 		return s.processSpecularTexture(line, handler)
+	case line.HasCommandName("map_Ke"):
+		return s.processEmissiveTexture(line, handler)
 	case line.HasCommandName("map_Ns"):
 		return s.processSpecularExponentTexture(line, handler)
 	case line.HasCommandName("map_d"):
 		return s.processDissolveTexture(line, handler)
+	case line.HasCommandName("map_Bump"):
+		return s.processNormalTexture(line, handler)
 	default:
 		return nil
 	}
@@ -222,6 +240,20 @@ func (s *scanner) processSpecularColor(line common.Line, handler common.EventHan
 		return err
 	}
 	return handler(RGBSpecularColorEvent(event))
+}
+
+func (s *scanner) processEmissiveColor(line common.Line, handler common.EventHandler) error {
+	if line.ParamCount() < 1 {
+		return errors.New("Emissive color declaration lacks parameters!")
+	}
+	if s.isSpectralColor(line) || s.isXYZColor(line) {
+		return nil
+	}
+	event, err := s.getRGBColorEvent(line)
+	if err != nil {
+		return err
+	}
+	return handler(RGBEmissiveColorEvent(event))
 }
 
 func (s *scanner) processTransmissionFilter(line common.Line, handler common.EventHandler) error {
@@ -334,6 +366,17 @@ func (s *scanner) processSpecularTexture(line common.Line, handler common.EventH
 	return handler(SpecularTextureEvent(event))
 }
 
+func (s *scanner) processEmissiveTexture(line common.Line, handler common.EventHandler) error {
+	if line.ParamCount() < 1 {
+		return errors.New("Emissive texture declaration lacks filename parameter!")
+	}
+	event, err := s.getTextureEvent(line)
+	if err != nil {
+		return err
+	}
+	return handler(EmissiveTextureEvent(event))
+}
+
 func (s *scanner) processSpecularExponentTexture(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 1 {
 		return errors.New("Specular exponent texture declaration lacks filename parameter!")
@@ -354,6 +397,17 @@ func (s *scanner) processDissolveTexture(line common.Line, handler common.EventH
 		return err
 	}
 	return handler(DissolveTextureEvent(event))
+}
+
+func (s *scanner) processNormalTexture(line common.Line, handler common.EventHandler) error {
+	if line.ParamCount() < 1 {
+		return errors.New("Normal texture declaration lacks filename parameter!")
+	}
+	event, err := s.getTextureEvent(line)
+	if err != nil {
+		return err
+	}
+	return handler(NormalTextureEvent(event))
 }
 
 func (s *scanner) getTextureEvent(line common.Line) (TextureEvent, error) {

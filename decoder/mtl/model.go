@@ -38,6 +38,10 @@ type Material struct {
 	// when rendering objects.
 	SpecularColor RGBColor
 
+	// EmissiveColor holds the emissive color to be used
+	// when rendering objects.
+	EmissiveColor RGBColor
+
 	// TransmissionFilter holds the filter to be used on
 	// colors when rendering objects.
 	TransmissionFilter RGBColor
@@ -78,6 +82,13 @@ type Material struct {
 	// specular texture provided.
 	SpecularTexture string
 
+	// EmissiveTexture defines the location of the emissive
+	// texture to be used when rendering objects.
+	//
+	// If this value is the empty string, then there is no
+	// emissive texture provided.
+	EmissiveTexture string
+
 	// SpecularExponentTexture defines the location of the specular
 	// exponent texture to be used when rendering objects.
 	//
@@ -91,6 +102,13 @@ type Material struct {
 	// If this value is the empty string, then there is no
 	// dissolve texture provided.
 	DissolveTexture string
+
+	// NormalTexture defines the location of the normal
+	// texture to be used when rendering objects.
+	//
+	// If this value is the empty string, then there is no
+	// normal texture provided.
+	NormalTexture string
 }
 
 // DefaultMaterial returns a new Material which is
