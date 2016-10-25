@@ -111,6 +111,11 @@ var _ = Describe("Scanner", func() {
 				G: 0.7,
 				B: 0.8,
 			})
+			assertEvent(RGBEmissiveColorEvent{
+				R: 0.4,
+				G: 0.3,
+				B: 0.9,
+			})
 			assertEvent(DissolveEvent{
 				Amount: 0.4,
 			})
@@ -131,6 +136,12 @@ var _ = Describe("Scanner", func() {
 			})
 			assertEvent(DissolveTextureEvent{
 				TexturePath: "textures/dissolve.bmp",
+			})
+			assertEvent(EmissiveTextureEvent{
+				TexturePath: "textures/emissive.png",
+			})
+			assertEvent(BumpTextureEvent{
+				TexturePath: "textures/bump.png",
 			})
 			assertNoMoreEvents()
 		})
@@ -239,6 +250,33 @@ var _ = Describe("Scanner", func() {
 		})
 	})
 
+	Context("when reading all kinds of emissive colors", func() {
+		BeforeEach(func() {
+			scanFile("valid_emissive_colors.mtl", trackedHandler)
+		})
+
+		itShouldNotHaveReturnedAnError()
+
+		It("should have scanned all the colors", func() {
+			assertEvent(RGBEmissiveColorEvent{
+				R: 0.3,
+				G: 0.3,
+				B: 0.3,
+			})
+			assertEvent(RGBEmissiveColorEvent{
+				R: 0.2,
+				G: 0.2,
+				B: 0.2,
+			})
+			assertEvent(RGBEmissiveColorEvent{
+				R: 0.5,
+				G: 0.6,
+				B: 0.7,
+			})
+			assertNoMoreEvents()
+		})
+	})
+
 	Context("when reading unsupported declarations", func() {
 		BeforeEach(func() {
 			scanFile("valid_unsupported_declarations.mtl", trackedHandler)
@@ -323,6 +361,22 @@ var _ = Describe("Scanner", func() {
 		itShouldHaveReturnedAnError()
 	})
 
+	Context("when reading emissive color without enough values", func() {
+		BeforeEach(func() {
+			scanFile("error_missing_emissive_color_values.mtl", trackedHandler)
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when reading emissive color with invalid values", func() {
+		BeforeEach(func() {
+			scanFile("error_invalid_emissive_color_values.mtl", trackedHandler)
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
 	Context("when reading dissolve without value", func() {
 		BeforeEach(func() {
 			scanFile("error_missing_dissolve_value.mtl", trackedHandler)
@@ -395,6 +449,22 @@ var _ = Describe("Scanner", func() {
 		itShouldHaveReturnedAnError()
 	})
 
+	Context("when reading emissive texture without filename param", func() {
+		BeforeEach(func() {
+			scanFile("error_missing_emissive_texture_filename.mtl", trackedHandler)
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when reading bump texture without filename param", func() {
+		BeforeEach(func() {
+			scanFile("error_missing_bump_texture_filename.mtl", trackedHandler)
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
 	Context("when handler returns error on ambient colors", func() {
 		BeforeEach(func() {
 			scanFile("valid_ambient_colors.mtl", errorHandler)
@@ -422,6 +492,14 @@ var _ = Describe("Scanner", func() {
 	Context("when handler returns error on transmission filters", func() {
 		BeforeEach(func() {
 			scanFile("valid_transmission_filters.mtl", errorHandler)
+		})
+
+		itShouldHaveReturnedHandlerError()
+	})
+
+	Context("when handler returns error on emissive colors", func() {
+		BeforeEach(func() {
+			scanFile("valid_emissive_colors.mtl", errorHandler)
 		})
 
 		itShouldHaveReturnedHandlerError()
@@ -478,6 +556,22 @@ var _ = Describe("Scanner", func() {
 	Context("when handler returns error on dissolve textures", func() {
 		BeforeEach(func() {
 			scanFile("valid_dissolve_textures.mtl", errorHandler)
+		})
+
+		itShouldHaveReturnedHandlerError()
+	})
+
+	Context("when handler returns error on emissive textures", func() {
+		BeforeEach(func() {
+			scanFile("valid_emissive_textures.mtl", errorHandler)
+		})
+
+		itShouldHaveReturnedHandlerError()
+	})
+
+	Context("when handler returns error on bump textures", func() {
+		BeforeEach(func() {
+			scanFile("valid_bump_textures.mtl", errorHandler)
 		})
 
 		itShouldHaveReturnedHandlerError()

@@ -31,6 +31,22 @@ var _ = Describe("Model", func() {
 			}))
 		})
 
+		It("should have no specular color", func() {
+			Ω(material.SpecularColor).Should(Equal(RGBColor{
+				R: 0.0,
+				G: 0.0,
+				B: 0.0,
+			}))
+		})
+
+		It("should have no emissive color", func() {
+			Ω(material.EmissiveColor).Should(Equal(RGBColor{
+				R: 0.0,
+				G: 0.0,
+				B: 0.0,
+			}))
+		})
+
 		It("should have a factor of 1.0 dissolve", func() {
 			Ω(material.Dissolve).Should(Equal(1.0))
 		})

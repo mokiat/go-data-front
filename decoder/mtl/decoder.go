@@ -106,8 +106,8 @@ func (c *decodeContext) HandleEvent(event common.Event) error {
 		return c.handleSpecularExponentTexture(actual)
 	case scanMTL.DissolveTextureEvent:
 		return c.handleDissolveTexture(actual)
-	case scanMTL.NormalTextureEvent:
-		return c.handleNormalTexture(actual)
+	case scanMTL.BumpTextureEvent:
+		return c.handleBumpTexture(actual)
 	}
 	return nil
 }
@@ -246,11 +246,11 @@ func (c *decodeContext) handleDissolveTexture(event scanMTL.DissolveTextureEvent
 	return nil
 }
 
-func (c *decodeContext) handleNormalTexture(event scanMTL.NormalTextureEvent) error {
+func (c *decodeContext) handleBumpTexture(event scanMTL.BumpTextureEvent) error {
 	if c.CurrentMaterial == nil {
 		return c.newMissingMaterialError()
 	}
-	c.CurrentMaterial.NormalTexture = event.TexturePath
+	c.CurrentMaterial.BumpTexture = event.TexturePath
 	return nil
 }
 

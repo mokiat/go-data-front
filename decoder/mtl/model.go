@@ -103,12 +103,12 @@ type Material struct {
 	// dissolve texture provided.
 	DissolveTexture string
 
-	// NormalTexture defines the location of the normal
+	// BumpTexture defines the location of the bump
 	// texture to be used when rendering objects.
 	//
 	// If this value is the empty string, then there is no
-	// normal texture provided.
-	NormalTexture string
+	// Bump texture provided.
+	BumpTexture string
 }
 
 // DefaultMaterial returns a new Material which is
