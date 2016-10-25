@@ -86,6 +86,8 @@ func (c *decodeContext) HandleEvent(event common.Event) error {
 		return c.handleDiffuseColor(actual)
 	case scanMTL.RGBSpecularColorEvent:
 		return c.handleSpecularColor(actual)
+	case scanMTL.RGBEmissiveColorEvent:
+		return c.handleEmissiveColor(actual)
 	case scanMTL.RGBTransmissionFilterEvent:
 		return c.handleTransmissionFilter(actual)
 	case scanMTL.SpecularExponentEvent:
@@ -98,10 +100,14 @@ func (c *decodeContext) HandleEvent(event common.Event) error {
 		return c.handleDiffuseTexture(actual)
 	case scanMTL.SpecularTextureEvent:
 		return c.handleSpecularTexture(actual)
+	case scanMTL.EmissiveTextureEvent:
+		return c.handleEmissiveTexture(actual)
 	case scanMTL.SpecularExponentTextureEvent:
 		return c.handleSpecularExponentTexture(actual)
 	case scanMTL.DissolveTextureEvent:
 		return c.handleDissolveTexture(actual)
+	case scanMTL.BumpTextureEvent:
+		return c.handleBumpTexture(actual)
 	}
 	return nil
 }
@@ -145,6 +151,18 @@ func (c *decodeContext) handleSpecularColor(event scanMTL.RGBSpecularColorEvent)
 		return c.newMissingMaterialError()
 	}
 	c.CurrentMaterial.SpecularColor = RGBColor{
+		R: event.R,
+		G: event.G,
+		B: event.B,
+	}
+	return nil
+}
+
+func (c *decodeContext) handleEmissiveColor(event scanMTL.RGBEmissiveColorEvent) error {
+	if c.CurrentMaterial == nil {
+		return c.newMissingMaterialError()
+	}
+	c.CurrentMaterial.EmissiveColor = RGBColor{
 		R: event.R,
 		G: event.G,
 		B: event.B,
@@ -204,6 +222,14 @@ func (c *decodeContext) handleSpecularTexture(event scanMTL.SpecularTextureEvent
 	return nil
 }
 
+func (c *decodeContext) handleEmissiveTexture(event scanMTL.EmissiveTextureEvent) error {
+	if c.CurrentMaterial == nil {
+		return c.newMissingMaterialError()
+	}
+	c.CurrentMaterial.EmissiveTexture = event.TexturePath
+	return nil
+}
+
 func (c *decodeContext) handleSpecularExponentTexture(event scanMTL.SpecularExponentTextureEvent) error {
 	if c.CurrentMaterial == nil {
 		return c.newMissingMaterialError()
@@ -217,6 +243,14 @@ func (c *decodeContext) handleDissolveTexture(event scanMTL.DissolveTextureEvent
 		return c.newMissingMaterialError()
 	}
 	c.CurrentMaterial.DissolveTexture = event.TexturePath
+	return nil
+}
+
+func (c *decodeContext) handleBumpTexture(event scanMTL.BumpTextureEvent) error {
+	if c.CurrentMaterial == nil {
+		return c.newMissingMaterialError()
+	}
+	c.CurrentMaterial.BumpTexture = event.TexturePath
 	return nil
 }
 

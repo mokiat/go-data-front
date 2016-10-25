@@ -96,6 +96,14 @@ var _ = Describe("Decoder", func() {
 				}))
 			})
 
+			It("should have decoded emissive color", func() {
+				Ω(material.EmissiveColor).Should(Equal(RGBColor{
+					R: 0.4,
+					G: 0.3,
+					B: 0.9,
+				}))
+			})
+
 			It("should have decoded specular exponent", func() {
 				Ω(material.SpecularExponent).Should(Equal(650.0))
 			})
@@ -122,6 +130,14 @@ var _ = Describe("Decoder", func() {
 
 			It("should have decoded dissolve texture", func() {
 				Ω(material.DissolveTexture).Should(Equal("dissolve.png"))
+			})
+
+			It("should have decoded emissive texture", func() {
+				Ω(material.EmissiveTexture).Should(Equal("emissive.png"))
+			})
+
+			It("should have decoded bump texture", func() {
+				Ω(material.BumpTexture).Should(Equal("bump.png"))
 			})
 		})
 	})
@@ -180,6 +196,14 @@ var _ = Describe("Decoder", func() {
 		itShouldHaveReturnedAnError()
 	})
 
+	Context("when decoding emissive color without material", func() {
+		BeforeEach(func() {
+			decodeFile("error_emissive_color_no_material.mtl")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
 	Context("when decoding specular exponent without material", func() {
 		BeforeEach(func() {
 			decodeFile("error_specular_exponent_no_material.mtl")
@@ -231,6 +255,22 @@ var _ = Describe("Decoder", func() {
 	Context("when decoding dissolve texture without material", func() {
 		BeforeEach(func() {
 			decodeFile("error_dissolve_texture_no_material.mtl")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when decoding emissive texture without material", func() {
+		BeforeEach(func() {
+			decodeFile("error_emissive_texture_no_material.mtl")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when decoding bump texture without material", func() {
+		BeforeEach(func() {
+			decodeFile("error_bump_texture_no_material.mtl")
 		})
 
 		itShouldHaveReturnedAnError()
