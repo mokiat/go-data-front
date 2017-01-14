@@ -6,9 +6,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/momchil-atanasov/go-data-front/common"
-	. "github.com/momchil-atanasov/go-data-front/common/common_test_help"
-	. "github.com/momchil-atanasov/go-data-front/scanner/obj"
+	"github.com/mokiat/go-data-front/common"
+	. "github.com/mokiat/go-data-front/common/common_test_help"
+	. "github.com/mokiat/go-data-front/scanner/obj"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/momchil-atanasov/go-data-front/common"
+	"github.com/mokiat/go-data-front/common"
 )
 
 // MaterialLibraryEvent indicates that a material library (MTL resource)

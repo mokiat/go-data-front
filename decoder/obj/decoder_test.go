@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	. "github.com/momchil-atanasov/go-data-front/decoder/obj"
+	. "github.com/mokiat/go-data-front/decoder/obj"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

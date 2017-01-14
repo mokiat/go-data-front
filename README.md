@@ -1,6 +1,6 @@
 # Go Library for Wavefront file parsing
 
-[![Build Status](https://travis-ci.org/momchil-atanasov/go-data-front.png)](https://travis-ci.org/momchil-atanasov/go-data-front) [![Go Report Card](https://goreportcard.com/badge/github.com/momchil-atanasov/go-data-front)](https://goreportcard.com/report/github.com/momchil-atanasov/go-data-front)
+[![Build Status](https://travis-ci.org/mokiat/go-data-front.png)](https://travis-ci.org/mokiat/go-data-front) [![Go Report Card](https://goreportcard.com/badge/github.com/mokiat/go-data-front)](https://goreportcard.com/report/github.com/mokiat/go-data-front)
 
 A Go library for reading Wavefront 3D model resources (OBJ, MTL).
 
@@ -54,7 +54,7 @@ func handleEvent(event common.Event) error {
 }
 ```
 
-You can find the API documentation **[here](https://godoc.org/github.com/momchil-atanasov/go-data-front/scanner/obj)**.
+You can find the API documentation **[here](https://godoc.org/github.com/mokiat/go-data-front/scanner/obj)**.
 
 
 #### Decoder
@@ -77,7 +77,7 @@ func main() {
 }
 ```
 
-You can find the API documentation **[here](https://godoc.org/github.com/momchil-atanasov/go-data-front/decoder/obj)**.
+You can find the API documentation **[here](https://godoc.org/github.com/mokiat/go-data-front/decoder/obj)**.
 
 ### MTL
 
@@ -122,7 +122,7 @@ func handleEvent(event common.Event) error {
 }
 ```
 
-You can find the API documentation **[here](https://godoc.org/github.com/momchil-atanasov/go-data-front/scanner/mtl)**.
+You can find the API documentation **[here](https://godoc.org/github.com/mokiat/go-data-front/scanner/mtl)**.
 
 #### Decoder
 
@@ -141,7 +141,7 @@ func main() {
 }
 ```
 
-You can find the API documentation **[here](https://godoc.org/github.com/momchil-atanasov/go-data-front/decoder/mtl)**.
+You can find the API documentation **[here](https://godoc.org/github.com/mokiat/go-data-front/decoder/mtl)**.
 
 ## Developer's Guide
 
@@ -157,4 +157,4 @@ ginkgo -r
 
 This library was implemented to support other projects of mine. As such, it supports only a subset of the OBJ and MTL specifications. The features that are provided should be sufficient for most use cases.
 
-This repository is a rewrite of the **[https://github.com/momchil-atanasov/java-data-front](https://github.com/momchil-atanasov/java-data-front)** one, which is in Java.
+This repository is a rewrite of the **[https://github.com/mokiat/java-data-front](https://github.com/mokiat/java-data-front)** one, which is in Java.
