@@ -74,7 +74,7 @@ type Normal struct {
 	// X coordinate of this normal.
 	X float64
 
-	// Y coordiante of this normal.
+	// Y coordinate of this normal.
 	Y float64
 
 	// Z coordinate of this normal.
