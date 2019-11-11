@@ -4,8 +4,8 @@ import (
 	"errors"
 	"io"
 
-	"github.com/mokiat/go-data-front/common"
-	scanOBJ "github.com/mokiat/go-data-front/scanner/obj"
+	"github.com/DanTulovsky/go-data-front/common"
+	scanOBJ "github.com/DanTulovsky/go-data-front/scanner/obj"
 )
 
 // DecodeLimits specifies restrictions on parsing.

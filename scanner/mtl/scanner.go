@@ -4,7 +4,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/mokiat/go-data-front/common"
+	"github.com/DanTulovsky/go-data-front/common"
 )
 
 // MaterialEvent indicates that a material declaration (`newmtl`) has
@@ -52,6 +52,14 @@ type RGBEmissiveColorEvent RGBColorEvent
 // RGBTransmissionFilterEvent indicates that a specular color declaration (`Tf`)
 // has been scanned.
 type RGBTransmissionFilterEvent RGBColorEvent
+
+// IllumEvent indicates that an illum declaration (`illum`) has been
+// scanned.
+type IllumEvent struct {
+
+	// Amount indicates illum value; see http://paulbourke.net/dataformats/mtl/
+	Amount int64
+}
 
 // DissolveEvent indicates that a dissolve declaration (`d`) has been
 // scanned.
@@ -168,6 +176,8 @@ func (s *scanner) processCommand(line common.Line, handler common.EventHandler) 
 		return s.processTransmissionFilter(line, handler)
 	case line.HasCommandName("d"):
 		return s.processDissolve(line, handler)
+	case line.HasCommandName("illum"):
+		return s.processIllum(line, handler)
 	case line.HasCommandName("Ns"):
 		return s.processSpecularExponent(line, handler)
 	case line.HasCommandName("map_Ka"):
@@ -303,6 +313,20 @@ func (s *scanner) getRGBColorEvent(line common.Line) (RGBColorEvent, error) {
 	}
 
 	return event, nil
+}
+
+func (s *scanner) processIllum(line common.Line, handler common.EventHandler) error {
+	if line.ParamCount() < 1 {
+		return errors.New("illum declaration lacks value parameter")
+	}
+	amount, err := line.IntParam(0)
+	if err != nil {
+		return err
+	}
+	event := IllumEvent{
+		Amount: amount,
+	}
+	return handler(event)
 }
 
 func (s *scanner) processDissolve(line common.Line, handler common.EventHandler) error {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	. "github.com/mokiat/go-data-front/decoder/mtl"
+	. "github.com/DanTulovsky/go-data-front/decoder/mtl"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -112,6 +112,10 @@ var _ = Describe("Decoder", func() {
 				Ω(material.Dissolve).Should(Equal(0.7))
 			})
 
+			It("should have decoded illum", func() {
+				Ω(material.Illum).Should(Equal(int64(2)))
+			})
+
 			It("should have decoded ambient texture", func() {
 				Ω(material.AmbientTexture).Should(Equal("ambient.png"))
 			})
@@ -215,6 +219,14 @@ var _ = Describe("Decoder", func() {
 	Context("when decoding dissolve without material", func() {
 		BeforeEach(func() {
 			decodeFile("error_dissolve_no_material.mtl")
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	Context("when decoding illum without material", func() {
+		BeforeEach(func() {
+			decodeFile("error_illum_no_material.mtl")
 		})
 
 		itShouldHaveReturnedAnError()

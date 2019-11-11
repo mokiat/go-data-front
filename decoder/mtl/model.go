@@ -109,6 +109,34 @@ type Material struct {
 	// If this value is the empty string, then there is no
 	// Bump texture provided.
 	BumpTexture string
+
+	// http://paulbourke.net/dataformats/mtl/
+	// The "illum" statement specifies the illumination model to use in the
+	// material.  Illumination models are mathematical equations that represent
+	// various material lighting and shading effects.
+
+	//  "illum_#"can be a number from 0 to 10.  The illumination models are
+	// summarized below
+
+	//  Illumination    Properties that are turned on in the
+	//  model           Property Editor
+
+	//  0		Color on and Ambient off
+	//  1		Color on and Ambient on
+	//  2		Highlight on
+	//  3		Reflection on and Ray trace on
+	//  4		Transparency: Glass on
+	// 		 Reflection: Ray trace on
+	//  5		Reflection: Fresnel on and Ray trace on
+	//  6		Transparency: Refraction on
+	// 		 Reflection: Fresnel off and Ray trace on
+	//  7		Transparency: Refraction on
+	// 		 Reflection: Fresnel on and Ray trace on
+	//  8		Reflection on and Ray trace off
+	//  9		Transparency: Glass on
+	// 		 Reflection: Ray trace off
+	//  10		Casts shadows onto invisible surfaces
+	Illum int64
 }
 
 // DefaultMaterial returns a new Material which is

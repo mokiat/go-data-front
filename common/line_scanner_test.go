@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	. "github.com/mokiat/go-data-front/common"
+	. "github.com/DanTulovsky/go-data-front/common"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

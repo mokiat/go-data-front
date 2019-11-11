@@ -6,9 +6,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/mokiat/go-data-front/common"
-	. "github.com/mokiat/go-data-front/common/common_test_help"
-	. "github.com/mokiat/go-data-front/scanner/mtl"
+	"github.com/DanTulovsky/go-data-front/common"
+	. "github.com/DanTulovsky/go-data-front/common/common_test_help"
+	. "github.com/DanTulovsky/go-data-front/scanner/mtl"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -121,6 +121,9 @@ var _ = Describe("Scanner", func() {
 			})
 			assertEvent(SpecularExponentEvent{
 				Amount: 330.0,
+			})
+			assertEvent(IllumEvent{
+				Amount: 2,
 			})
 			assertEvent(AmbientTextureEvent{
 				TexturePath: "textures/ambient.bmp",
@@ -385,6 +388,13 @@ var _ = Describe("Scanner", func() {
 		itShouldHaveReturnedAnError()
 	})
 
+	Context("when reading illum without value", func() {
+		BeforeEach(func() {
+			scanFile("error_missing_illum_value.mtl", trackedHandler)
+		})
+
+		itShouldHaveReturnedAnError()
+	})
 	Context("when reading dissolve with invalid value", func() {
 		BeforeEach(func() {
 			scanFile("error_invalid_dissolve_value.mtl", trackedHandler)
@@ -393,6 +403,13 @@ var _ = Describe("Scanner", func() {
 		itShouldHaveReturnedAnError()
 	})
 
+	Context("when reading illum with invalid value", func() {
+		BeforeEach(func() {
+			scanFile("error_invalid_illum_value.mtl", trackedHandler)
+		})
+
+		itShouldHaveReturnedAnError()
+	})
 	Context("when reading specular exponent without value", func() {
 		BeforeEach(func() {
 			scanFile("error_missing_specular_exponent_value.mtl", trackedHandler)
@@ -513,6 +530,13 @@ var _ = Describe("Scanner", func() {
 		itShouldHaveReturnedHandlerError()
 	})
 
+	Context("when handler returns error on illums", func() {
+		BeforeEach(func() {
+			scanFile("valid_illums.mtl", errorHandler)
+		})
+
+		itShouldHaveReturnedHandlerError()
+	})
 	Context("when handler returns error on specular exponents", func() {
 		BeforeEach(func() {
 			scanFile("valid_specular_exponents.mtl", errorHandler)

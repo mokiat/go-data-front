@@ -4,8 +4,8 @@ import (
 	"errors"
 	"io"
 
-	"github.com/mokiat/go-data-front/common"
-	scanMTL "github.com/mokiat/go-data-front/scanner/mtl"
+	scanMTL "github.com/DanTulovsky/go-data-front/scanner/mtl"
+	"github.com/DanTulovsky/go-data-front/common"
 )
 
 // DecodeLimits specifies restrictions on parsing.
@@ -92,6 +92,8 @@ func (c *decodeContext) HandleEvent(event common.Event) error {
 		return c.handleTransmissionFilter(actual)
 	case scanMTL.SpecularExponentEvent:
 		return c.handleSpecularExponent(actual)
+	case scanMTL.IllumEvent:
+		return c.handleIllum(actual)
 	case scanMTL.DissolveEvent:
 		return c.handleDissolve(actual)
 	case scanMTL.AmbientTextureEvent:
@@ -187,6 +189,14 @@ func (c *decodeContext) handleSpecularExponent(event scanMTL.SpecularExponentEve
 		return c.newMissingMaterialError()
 	}
 	c.CurrentMaterial.SpecularExponent = event.Amount
+	return nil
+}
+
+func (c *decodeContext) handleIllum(event scanMTL.IllumEvent) error {
+	if c.CurrentMaterial == nil {
+		return c.newMissingMaterialError()
+	}
+	c.CurrentMaterial.Illum = event.Amount
 	return nil
 }
 
