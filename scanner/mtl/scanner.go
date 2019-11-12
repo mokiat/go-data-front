@@ -4,7 +4,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/DanTulovsky/go-data-front/common"
+	"github.com/mokiat/go-data-front/common"
 )
 
 // MaterialEvent indicates that a material declaration (`newmtl`) has

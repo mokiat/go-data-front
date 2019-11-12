@@ -1,7 +1,7 @@
 package mtl_test
 
 import (
-	. "github.com/DanTulovsky/go-data-front/decoder/mtl"
+	. "github.com/mokiat/go-data-front/decoder/mtl"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

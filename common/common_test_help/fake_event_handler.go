@@ -1,6 +1,6 @@
 package common_test_help
 
-import "github.com/DanTulovsky/go-data-front/common"
+import "github.com/mokiat/go-data-front/common"
 
 type EventHandlerTracker struct {
 	Events []common.Event

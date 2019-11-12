@@ -1,7 +1,7 @@
 package obj_test
 
 import (
-	. "github.com/DanTulovsky/go-data-front/decoder/obj"
+	. "github.com/mokiat/go-data-front/decoder/obj"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

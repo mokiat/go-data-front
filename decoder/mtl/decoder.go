@@ -4,8 +4,8 @@ import (
 	"errors"
 	"io"
 
-	scanMTL "github.com/DanTulovsky/go-data-front/scanner/mtl"
-	"github.com/DanTulovsky/go-data-front/common"
+	scanMTL "github.com/mokiat/go-data-front/scanner/mtl"
+	"github.com/mokiat/go-data-front/common"
 )
 
 // DecodeLimits specifies restrictions on parsing.
