@@ -1,13 +1,13 @@
 package mtl_test
 
 import (
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"testing"
 )
 
-func TestMtl(t *testing.T) {
+func TestMTL(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Mtl Suite")
+	RunSpecs(t, "MTL Scanner Suite")
 }
