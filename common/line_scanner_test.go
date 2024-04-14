@@ -7,7 +7,7 @@ import (
 
 	. "github.com/mokiat/go-data-front/common"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
