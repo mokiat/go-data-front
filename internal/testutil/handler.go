@@ -1,4 +1,4 @@
-package common_test_help
+package testutil
 
 import "github.com/mokiat/go-data-front/common"
 
