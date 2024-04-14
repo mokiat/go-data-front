@@ -10,12 +10,12 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/mokiat/go-data-front/common"
-	. "github.com/mokiat/go-data-front/common/common_test_help"
+	"github.com/mokiat/go-data-front/internal/testutil"
 	. "github.com/mokiat/go-data-front/scanner/mtl"
 )
 
 var _ = Describe("Scanner", func() {
-	var handlerTracker *EventHandlerTracker
+	var handlerTracker *testutil.EventHandlerTracker
 	var trackedHandler common.EventHandler
 	var errorHandlerErr error
 	var errorHandler common.EventHandler
@@ -24,7 +24,7 @@ var _ = Describe("Scanner", func() {
 	var eventCounter int
 
 	BeforeEach(func() {
-		handlerTracker = new(EventHandlerTracker)
+		handlerTracker = new(testutil.EventHandlerTracker)
 		trackedHandler = handlerTracker.Handle
 		eventCounter = 0
 
@@ -42,7 +42,7 @@ var _ = Describe("Scanner", func() {
 	}
 
 	scanFile := func(filename string, handler common.EventHandler) {
-		file, err := os.Open(fmt.Sprintf("mtl_test_res/%s", filename))
+		file, err := os.Open(fmt.Sprintf("testdata/%s", filename))
 		if err != nil {
 			panic(err)
 		}
@@ -583,7 +583,7 @@ var _ = Describe("Scanner", func() {
 
 		BeforeEach(func() {
 			readerErr = errors.New("Failed to read!")
-			reader := NewFailingReader(readerErr)
+			reader := testutil.NewFailingReader(readerErr)
 			scan(reader, trackedHandler)
 		})
 

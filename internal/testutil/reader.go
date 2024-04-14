@@ -1,15 +1,15 @@
-package common_test_help
+package testutil
 
 import "io"
-
-type failingReader struct {
-	err error
-}
 
 func NewFailingReader(err error) io.Reader {
 	return &failingReader{
 		err: err,
 	}
+}
+
+type failingReader struct {
+	err error
 }
 
 func (r *failingReader) Read(p []byte) (n int, err error) {

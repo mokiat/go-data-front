@@ -17,7 +17,7 @@ var _ = Describe("Decoder", func() {
 	var decodeErr error
 
 	decodeFile := func(filename string) {
-		file, err := os.Open(fmt.Sprintf("mtl_test_res/%s", filename))
+		file, err := os.Open(fmt.Sprintf("testdata/%s", filename))
 		if err != nil {
 			panic(err)
 		}

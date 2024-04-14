@@ -24,7 +24,7 @@ var _ = Describe("LineScanner", func() {
 	}
 
 	openForScanning := func(fileName string) {
-		reader = openFile(fmt.Sprintf("common_test_res/%s", fileName))
+		reader = openFile(fmt.Sprintf("testdata/%s", fileName))
 		lineScanner = NewLineScanner(reader)
 	}
 
