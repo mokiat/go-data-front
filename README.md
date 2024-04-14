@@ -1,6 +1,8 @@
 # Go Library for Wavefront file parsing
 
-[![Build Status](https://travis-ci.org/mokiat/go-data-front.png)](https://travis-ci.org/mokiat/go-data-front) [![Go Report Card](https://goreportcard.com/badge/github.com/mokiat/go-data-front)](https://goreportcard.com/report/github.com/mokiat/go-data-front)
+[![Go Reference](https://pkg.go.dev/badge/github.com/mokiat/go-data-front.svg)](https://pkg.go.dev/github.com/mokiat/go-data-front)
+![Build Status](https://github.com/mokiat/go-data-front/workflows/Go/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mokiat/go-data-front)](https://goreportcard.com/report/github.com/mokiat/go-data-front)
 
 A Go library for reading Wavefront 3D model resources (OBJ, MTL).
 
