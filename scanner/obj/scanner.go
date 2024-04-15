@@ -1,7 +1,7 @@
 package obj
 
 import (
-	"errors"
+	"fmt"
 	"io"
 
 	"github.com/mokiat/go-data-front/common"
@@ -164,26 +164,26 @@ type scanner struct {
 func (s *scanner) Scan(reader io.Reader, handler common.EventHandler) error {
 	lineScanner := common.NewLineScanner(reader)
 
-	var err error
 	for lineScanner.Scan() {
 		line := lineScanner.Line()
 		switch {
 		case line.IsBlank():
-			break
+			// Nothing to do.
 		case line.IsComment():
-			err = s.processComment(line, handler)
-			break
+			if err := s.processComment(line, handler); err != nil {
+				return err
+			}
 		case line.IsCommand():
-			err = s.processCommand(line, handler)
-			break
-		}
-		if err != nil {
-			return err
+			if err := s.processCommand(line, handler); err != nil {
+				return err
+			}
+		default:
+			// Ignore line.
 		}
 	}
 
-	if lineScanner.Err() != nil {
-		return lineScanner.Err()
+	if err := lineScanner.Err(); err != nil {
+		return err
 	}
 	return nil
 }
@@ -232,7 +232,7 @@ func (s *scanner) processMaterialLibrary(line common.Line, handler common.EventH
 
 func (s *scanner) processVertex(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 3 {
-		return errors.New("Insufficient vertex data.")
+		return fmt.Errorf("%w: insufficient vertex data", common.ErrInvalid)
 	}
 	var err error
 	event := VertexEvent{
@@ -261,7 +261,7 @@ func (s *scanner) processVertex(line common.Line, handler common.EventHandler) e
 
 func (s *scanner) processTexCoord(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() == 0 {
-		return errors.New("Insufficient texture coordinate data.")
+		return fmt.Errorf("%w: insufficient texture coordinate data", common.ErrInvalid)
 	}
 
 	var err error
@@ -289,7 +289,7 @@ func (s *scanner) processTexCoord(line common.Line, handler common.EventHandler)
 
 func (s *scanner) processNormal(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 3 {
-		return errors.New("Insufficient normal data.")
+		return fmt.Errorf("%w: insufficient normal data", common.ErrInvalid)
 	}
 	var err error
 	event := NormalEvent{
@@ -312,7 +312,7 @@ func (s *scanner) processNormal(line common.Line, handler common.EventHandler) e
 
 func (s *scanner) processObject(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() == 0 {
-		return errors.New("No name specified for object.")
+		return fmt.Errorf("%w: no name specified for object", common.ErrInvalid)
 	}
 	name := line.StringParam(0)
 	event := ObjectEvent{
@@ -352,7 +352,7 @@ func (s *scanner) processReferenceSet(referenceSet common.ReferenceSet, handler 
 	}
 
 	if referenceSet.Count() == 0 {
-		return errors.New("Reference set has no references.")
+		return fmt.Errorf("%w: reference set has no references", common.ErrInvalid)
 	}
 
 	vertexIndex, err := referenceSet.IntReference(0)

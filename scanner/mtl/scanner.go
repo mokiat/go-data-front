@@ -1,7 +1,7 @@
 package mtl
 
 import (
-	"errors"
+	"fmt"
 	"io"
 
 	"github.com/mokiat/go-data-front/common"
@@ -121,26 +121,26 @@ type scanner struct {
 func (s *scanner) Scan(reader io.Reader, handler common.EventHandler) error {
 	lineScanner := common.NewLineScanner(reader)
 
-	var err error
 	for lineScanner.Scan() {
 		line := lineScanner.Line()
 		switch {
 		case line.IsBlank():
-			break
+			// Nothing to do.
 		case line.IsComment():
-			err = s.processComment(line, handler)
-			break
+			if err := s.processComment(line, handler); err != nil {
+				return err
+			}
 		case line.IsCommand():
-			err = s.processCommand(line, handler)
-			break
-		}
-		if err != nil {
-			return err
+			if err := s.processCommand(line, handler); err != nil {
+				return err
+			}
+		default:
+			// Ignore line.
 		}
 	}
 
-	if lineScanner.Err() != nil {
-		return lineScanner.Err()
+	if err := lineScanner.Err(); err != nil {
+		return err
 	}
 	return nil
 }
@@ -191,7 +191,7 @@ func (s *scanner) processCommand(line common.Line, handler common.EventHandler) 
 
 func (s *scanner) processMaterial(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 1 {
-		return errors.New("Material declaration lacks name!")
+		return fmt.Errorf("%w: material declaration lacks name", common.ErrInvalid)
 	}
 	name := line.StringParam(0)
 	event := MaterialEvent{
@@ -202,7 +202,7 @@ func (s *scanner) processMaterial(line common.Line, handler common.EventHandler)
 
 func (s *scanner) processAmbientColor(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 1 {
-		return errors.New("Ambient color declaration lacks parameters!")
+		return fmt.Errorf("%w: ambient color declaration lacks parameters", common.ErrInvalid)
 	}
 	if s.isSpectralColor(line) || s.isXYZColor(line) {
 		return nil
@@ -216,7 +216,7 @@ func (s *scanner) processAmbientColor(line common.Line, handler common.EventHand
 
 func (s *scanner) processDiffuseColor(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 1 {
-		return errors.New("Diffuse color declaration lacks parameters!")
+		return fmt.Errorf("%w: diffuse color declaration lacks parameters", common.ErrInvalid)
 	}
 	if s.isSpectralColor(line) || s.isXYZColor(line) {
 		return nil
@@ -230,7 +230,7 @@ func (s *scanner) processDiffuseColor(line common.Line, handler common.EventHand
 
 func (s *scanner) processSpecularColor(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 1 {
-		return errors.New("Specular color declaration lacks parameters!")
+		return fmt.Errorf("%w: specular color declaration lacks parameters", common.ErrInvalid)
 	}
 	if s.isSpectralColor(line) || s.isXYZColor(line) {
 		return nil
@@ -244,7 +244,7 @@ func (s *scanner) processSpecularColor(line common.Line, handler common.EventHan
 
 func (s *scanner) processEmissiveColor(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 1 {
-		return errors.New("Emissive color declaration lacks parameters!")
+		return fmt.Errorf("%w: emissive color declaration lacks parameters", common.ErrInvalid)
 	}
 	if s.isSpectralColor(line) || s.isXYZColor(line) {
 		return nil
@@ -258,7 +258,7 @@ func (s *scanner) processEmissiveColor(line common.Line, handler common.EventHan
 
 func (s *scanner) processTransmissionFilter(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 3 {
-		return errors.New("Transmission filter declaration lacks parameters!")
+		return fmt.Errorf("%w: transmission filter declaration lacks parameters", common.ErrInvalid)
 	}
 	if s.isSpectralColor(line) || s.isXYZColor(line) {
 		return nil
@@ -307,7 +307,7 @@ func (s *scanner) getRGBColorEvent(line common.Line) (RGBColorEvent, error) {
 
 func (s *scanner) processDissolve(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 1 {
-		return errors.New("Dissolve declaration lacks value parameter!")
+		return fmt.Errorf("%w: dissolve declaration lacks value parameter", common.ErrInvalid)
 	}
 	amount, err := line.FloatParam(0)
 	if err != nil {
@@ -321,7 +321,7 @@ func (s *scanner) processDissolve(line common.Line, handler common.EventHandler)
 
 func (s *scanner) processSpecularExponent(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 1 {
-		return errors.New("Specular exponent declaration lacks value parameter!")
+		return fmt.Errorf("%w: specular exponent declaration lacks value parameter", common.ErrInvalid)
 	}
 	amount, err := line.FloatParam(0)
 	if err != nil {
@@ -335,7 +335,7 @@ func (s *scanner) processSpecularExponent(line common.Line, handler common.Event
 
 func (s *scanner) processAmbientTexture(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 1 {
-		return errors.New("Ambient texture declaration lacks filename parameter!")
+		return fmt.Errorf("%w: ambient texture declaration lacks filename parameter", common.ErrInvalid)
 	}
 	event, err := s.getTextureEvent(line)
 	if err != nil {
@@ -346,7 +346,7 @@ func (s *scanner) processAmbientTexture(line common.Line, handler common.EventHa
 
 func (s *scanner) processDiffuseTexture(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 1 {
-		return errors.New("Diffuse texture declaration lacks filename parameter!")
+		return fmt.Errorf("%w: diffuse texture declaration lacks filename parameter", common.ErrInvalid)
 	}
 	event, err := s.getTextureEvent(line)
 	if err != nil {
@@ -357,7 +357,7 @@ func (s *scanner) processDiffuseTexture(line common.Line, handler common.EventHa
 
 func (s *scanner) processSpecularTexture(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 1 {
-		return errors.New("Specular texture declaration lacks filename parameter!")
+		return fmt.Errorf("%w: specular texture declaration lacks filename parameter", common.ErrInvalid)
 	}
 	event, err := s.getTextureEvent(line)
 	if err != nil {
@@ -368,7 +368,7 @@ func (s *scanner) processSpecularTexture(line common.Line, handler common.EventH
 
 func (s *scanner) processEmissiveTexture(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 1 {
-		return errors.New("Emissive texture declaration lacks filename parameter!")
+		return fmt.Errorf("%w: emissive texture declaration lacks filename parameter", common.ErrInvalid)
 	}
 	event, err := s.getTextureEvent(line)
 	if err != nil {
@@ -379,7 +379,7 @@ func (s *scanner) processEmissiveTexture(line common.Line, handler common.EventH
 
 func (s *scanner) processSpecularExponentTexture(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 1 {
-		return errors.New("Specular exponent texture declaration lacks filename parameter!")
+		return fmt.Errorf("%w: specular exponent texture declaration lacks filename parameter", common.ErrInvalid)
 	}
 	event, err := s.getTextureEvent(line)
 	if err != nil {
@@ -390,7 +390,7 @@ func (s *scanner) processSpecularExponentTexture(line common.Line, handler commo
 
 func (s *scanner) processDissolveTexture(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 1 {
-		return errors.New("Dissolve texture declaration lacks filename parameter!")
+		return fmt.Errorf("%w: dissolve texture declaration lacks filename parameter", common.ErrInvalid)
 	}
 	event, err := s.getTextureEvent(line)
 	if err != nil {
@@ -401,7 +401,7 @@ func (s *scanner) processDissolveTexture(line common.Line, handler common.EventH
 
 func (s *scanner) processBumpTexture(line common.Line, handler common.EventHandler) error {
 	if line.ParamCount() < 1 {
-		return errors.New("Bump texture declaration lacks filename parameter!")
+		return fmt.Errorf("%w: bump texture declaration lacks filename parameter", common.ErrInvalid)
 	}
 	event, err := s.getTextureEvent(line)
 	if err != nil {
