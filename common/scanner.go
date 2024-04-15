@@ -10,9 +10,9 @@ import "io"
 // to one of them in order to extract meaningful data.
 //
 // Example event types:
-// - CommentEvent
-// - obj.ObjectEvent
-// - mtl.MaterialEvent
+//   - CommentEvent
+//   - obj.ObjectEvent
+//   - mtl.MaterialEvent
 type Event interface{}
 
 // CommentEvent indicates that a comment section has been
@@ -41,7 +41,7 @@ type EventHandler func(event Event) error
 // detected (e.g. when a normal or material declaration is parsed)
 type Scanner interface {
 
-	// Performs a scan through the Wavefront resource that is
+	// Scan performs a scan through the Wavefront resource that is
 	// provided through the io.Reader.
 	//
 	// The EventHandler parameter is used by the implementation to

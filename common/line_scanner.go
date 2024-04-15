@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"io"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -107,11 +106,7 @@ func (l Line) CommandName() string {
 // command. Parameters are indexed from `0` up to the number (excluding)
 // returned by this function.
 func (l Line) ParamCount() int {
-	count := len(l.segments) - 1
-	if count < 0 {
-		count = 0
-	}
-	return count
+	return max(0, len(l.segments)-1)
 }
 
 // StringParam returns the parameter, converted to a string, at the specified index
@@ -144,10 +139,9 @@ func (l Line) ReferenceSetParam(index int) ReferenceSet {
 	for i, segment := range segments {
 		segments[i] = strings.TrimSpace(segment)
 	}
-	set := ReferenceSet{
+	return ReferenceSet{
 		segments: segments,
 	}
-	return set
 }
 
 // LineScanner is an API that allows one to scan Wavefront files
@@ -168,24 +162,18 @@ type LineScanner interface {
 }
 
 type lineScanner struct {
-	scanner      *bufio.Scanner
-	segmentRegex *regexp.Regexp
-	lineBuffer   bytes.Buffer
-	scanLine     Line
-	scanErr      error
+	scanner    *bufio.Scanner
+	lineBuffer bytes.Buffer
+	scanLine   Line
+	scanErr    error
 }
 
 // NewLineScanner creates a new LineScanner instance that uses the
 // specified io.Reader to read a Wavefront resource.
 func NewLineScanner(reader io.Reader) LineScanner {
-	regex, err := regexp.Compile("[\\s]+")
-	if err != nil {
-		panic(err)
-	}
 	return &lineScanner{
-		scanner:      bufio.NewScanner(reader),
-		segmentRegex: regex,
-		lineBuffer:   bytes.Buffer{},
+		scanner:    bufio.NewScanner(reader),
+		lineBuffer: bytes.Buffer{},
 	}
 }
 
@@ -201,8 +189,8 @@ func (s *lineScanner) Scan() bool {
 
 		scanIterations++
 		line := s.scanner.Text()
-		if strings.HasSuffix(line, "\\") {
-			s.lineBuffer.WriteString(strings.TrimSuffix(line, "\\"))
+		if strings.HasSuffix(line, `\`) {
+			s.lineBuffer.WriteString(strings.TrimSuffix(line, `\`))
 		} else {
 			s.lineBuffer.WriteString(line)
 			break
@@ -216,7 +204,7 @@ func (s *lineScanner) Scan() bool {
 func (s *lineScanner) createLine(logicalLine string) Line {
 	return Line{
 		line:     strings.TrimSpace(logicalLine),
-		segments: s.segmentRegex.Split(logicalLine, -1),
+		segments: strings.Fields(logicalLine),
 	}
 }
 

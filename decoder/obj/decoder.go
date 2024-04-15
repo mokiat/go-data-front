@@ -1,7 +1,7 @@
 package obj
 
 import (
-	"errors"
+	"fmt"
 	"io"
 
 	"github.com/mokiat/go-data-front/common"
@@ -96,26 +96,30 @@ func (d *decoder) Decode(reader io.Reader) (*Model, error) {
 	if err != nil {
 		return nil, err
 	}
-	return context.Model, nil
+	return context.Model(), nil
 }
 
 func newDecodeContext(limits *DecodeLimits) *decodeContext {
 	return &decodeContext{
-		Limits:        limits,
-		Model:         new(Model),
-		CurrentObject: nil,
-		CurrentMesh:   nil,
-		CurrentFace:   nil,
+		limits:        limits,
+		model:         new(Model),
+		currentObject: nil,
+		currentMesh:   nil,
+		currentFace:   nil,
 	}
 }
 
 type decodeContext struct {
-	Limits           *DecodeLimits
-	Model            *Model
-	CurrentObject    *Object
-	CurrentMesh      *Mesh
-	CurrentFace      *Face
-	CurrentReference *Reference
+	limits           *DecodeLimits
+	model            *Model
+	currentObject    *Object
+	currentMesh      *Mesh
+	currentFace      *Face
+	currentReference *Reference
+}
+
+func (c *decodeContext) Model() *Model {
+	return c.model
 }
 
 func (c *decodeContext) HandleEvent(event common.Event) error {
@@ -151,18 +155,18 @@ func (c *decodeContext) HandleEvent(event common.Event) error {
 }
 
 func (c *decodeContext) handleMaterialLibrary(event scanOBJ.MaterialLibraryEvent) error {
-	if len(c.Model.MaterialLibraries) >= c.Limits.MaxMaterialLibraryCount {
-		return errors.New("Maximum number of material libraries reached!")
+	if len(c.model.MaterialLibraries) >= c.limits.MaxMaterialLibraryCount {
+		return fmt.Errorf("%w: maximum number of material libraries reached", common.ErrLimitsExceeded)
 	}
-	c.Model.MaterialLibraries = append(c.Model.MaterialLibraries, event.FilePath)
+	c.model.MaterialLibraries = append(c.model.MaterialLibraries, event.FilePath)
 	return nil
 }
 
 func (c *decodeContext) handleVertex(event scanOBJ.VertexEvent) error {
-	if len(c.Model.Vertices) >= c.Limits.MaxVertexCount {
-		return errors.New("Maximum number of vertices reached!")
+	if len(c.model.Vertices) >= c.limits.MaxVertexCount {
+		return fmt.Errorf("%w: maximum number of vertices reached", common.ErrLimitsExceeded)
 	}
-	c.Model.Vertices = append(c.Model.Vertices, Vertex{
+	c.model.Vertices = append(c.model.Vertices, Vertex{
 		X: event.X,
 		Y: event.Y,
 		Z: event.Z,
@@ -172,10 +176,10 @@ func (c *decodeContext) handleVertex(event scanOBJ.VertexEvent) error {
 }
 
 func (c *decodeContext) handleTexCoord(event scanOBJ.TexCoordEvent) error {
-	if len(c.Model.TexCoords) >= c.Limits.MaxTexCoordCount {
-		return errors.New("Maximum number of texture coordinates reached!")
+	if len(c.model.TexCoords) >= c.limits.MaxTexCoordCount {
+		return fmt.Errorf("%w: maximum number of texture coordinates reached", common.ErrLimitsExceeded)
 	}
-	c.Model.TexCoords = append(c.Model.TexCoords, TexCoord{
+	c.model.TexCoords = append(c.model.TexCoords, TexCoord{
 		U: event.U,
 		V: event.V,
 		W: event.W,
@@ -184,10 +188,10 @@ func (c *decodeContext) handleTexCoord(event scanOBJ.TexCoordEvent) error {
 }
 
 func (c *decodeContext) handleNormal(event scanOBJ.NormalEvent) error {
-	if len(c.Model.Normals) >= c.Limits.MaxNormalCount {
-		return errors.New("Maximum number of normals reached!")
+	if len(c.model.Normals) >= c.limits.MaxNormalCount {
+		return fmt.Errorf("%w: maximum number of normals reached", common.ErrLimitsExceeded)
 	}
-	c.Model.Normals = append(c.Model.Normals, Normal{
+	c.model.Normals = append(c.model.Normals, Normal{
 		X: event.X,
 		Y: event.Y,
 		Z: event.Z,
@@ -196,54 +200,54 @@ func (c *decodeContext) handleNormal(event scanOBJ.NormalEvent) error {
 }
 
 func (c *decodeContext) handleObject(event scanOBJ.ObjectEvent) error {
-	if len(c.Model.Objects) >= c.Limits.MaxObjectCount {
-		return errors.New("Maximum number of objects reached!")
+	if len(c.model.Objects) >= c.limits.MaxObjectCount {
+		return fmt.Errorf("%w: maximum number of objects reached", common.ErrLimitsExceeded)
 	}
-	c.CurrentMesh = nil
-	c.CurrentObject = new(Object)
-	c.CurrentObject.Name = event.ObjectName
-	c.Model.Objects = append(c.Model.Objects, c.CurrentObject)
+	c.currentMesh = nil
+	c.currentObject = new(Object)
+	c.currentObject.Name = event.ObjectName
+	c.model.Objects = append(c.model.Objects, c.currentObject)
 	return nil
 }
 
 func (c *decodeContext) handleMaterialReference(event scanOBJ.MaterialReferenceEvent) error {
 	c.assureCurrentObject()
-	mesh, found := c.CurrentObject.FindMesh(event.MaterialName)
+	mesh, found := c.currentObject.FindMesh(event.MaterialName)
 	if found {
-		c.CurrentMesh = mesh
+		c.currentMesh = mesh
 	} else {
-		if len(c.CurrentObject.Meshes) >= c.Limits.MaxMaterialReferenceCount {
-			return errors.New("Maximum number of material references reached!")
+		if len(c.currentObject.Meshes) >= c.limits.MaxMaterialReferenceCount {
+			return fmt.Errorf("%w: maximum number of material references reached", common.ErrLimitsExceeded)
 		}
-		c.CurrentMesh = new(Mesh)
-		c.CurrentMesh.MaterialName = event.MaterialName
-		c.CurrentObject.Meshes = append(c.CurrentObject.Meshes, c.CurrentMesh)
+		c.currentMesh = new(Mesh)
+		c.currentMesh.MaterialName = event.MaterialName
+		c.currentObject.Meshes = append(c.currentObject.Meshes, c.currentMesh)
 	}
 	return nil
 }
 
 func (c *decodeContext) handleFaceStart() error {
 	c.assureCurrentMesh()
-	if len(c.CurrentMesh.Faces) >= c.Limits.MaxFaceCount {
-		return errors.New("Maximum number of faces reached!")
+	if len(c.currentMesh.Faces) >= c.limits.MaxFaceCount {
+		return fmt.Errorf("%w: maximum number of faces reached", common.ErrLimitsExceeded)
 	}
-	c.CurrentFace = new(Face)
+	c.currentFace = new(Face)
 	return nil
 }
 
 func (c *decodeContext) handleFaceEnd() error {
-	if len(c.CurrentFace.References) < 3 {
-		return errors.New("Face needs to have at least three vertices.")
+	if len(c.currentFace.References) < 3 {
+		return fmt.Errorf("%w: face needs to have at least three vertices", common.ErrInvalid)
 	}
-	c.CurrentMesh.Faces = append(c.CurrentMesh.Faces, c.CurrentFace)
+	c.currentMesh.Faces = append(c.currentMesh.Faces, c.currentFace)
 	return nil
 }
 
 func (c *decodeContext) handleReferencesStart() error {
-	if len(c.CurrentFace.References) >= c.Limits.MaxReferenceCount {
-		return errors.New("Maximum number of vertex references reached!")
+	if len(c.currentFace.References) >= c.limits.MaxReferenceCount {
+		return fmt.Errorf("%w: maximum number of vertex references reached", common.ErrLimitsExceeded)
 	}
-	c.CurrentReference = &Reference{
+	c.currentReference = &Reference{
 		TexCoordIndex: UndefinedIndex,
 		NormalIndex:   UndefinedIndex,
 	}
@@ -251,52 +255,52 @@ func (c *decodeContext) handleReferencesStart() error {
 }
 
 func (c *decodeContext) handleReferencesEnd() error {
-	c.CurrentFace.References = append(c.CurrentFace.References, *c.CurrentReference)
+	c.currentFace.References = append(c.currentFace.References, *c.currentReference)
 	return nil
 }
 
 func (c *decodeContext) handleVertexReference(event scanOBJ.VertexReferenceEvent) error {
 	if event.VertexIndex > 0 {
-		c.CurrentReference.VertexIndex = event.VertexIndex - 1
+		c.currentReference.VertexIndex = event.VertexIndex - 1
 	} else {
-		c.CurrentReference.VertexIndex = int64(len(c.Model.Vertices)) + event.VertexIndex
+		c.currentReference.VertexIndex = int64(len(c.model.Vertices)) + event.VertexIndex
 	}
 	return nil
 }
 
 func (c *decodeContext) handleTexCoordReference(event scanOBJ.TexCoordReferenceEvent) error {
 	if event.TexCoordIndex > 0 {
-		c.CurrentReference.TexCoordIndex = event.TexCoordIndex - 1
+		c.currentReference.TexCoordIndex = event.TexCoordIndex - 1
 	} else {
-		c.CurrentReference.TexCoordIndex = int64(len(c.Model.TexCoords)) + event.TexCoordIndex
+		c.currentReference.TexCoordIndex = int64(len(c.model.TexCoords)) + event.TexCoordIndex
 	}
 	return nil
 }
 
 func (c *decodeContext) handleNormalReference(event scanOBJ.NormalReferenceEvent) error {
 	if event.NormalIndex > 0 {
-		c.CurrentReference.NormalIndex = event.NormalIndex - 1
+		c.currentReference.NormalIndex = event.NormalIndex - 1
 	} else {
-		c.CurrentReference.NormalIndex = int64(len(c.Model.Normals)) + event.NormalIndex
+		c.currentReference.NormalIndex = int64(len(c.model.Normals)) + event.NormalIndex
 	}
 	return nil
 }
 
 func (c *decodeContext) assureCurrentObject() {
-	if c.CurrentObject != nil {
+	if c.currentObject != nil {
 		return
 	}
-	c.CurrentObject = &Object{
+	c.currentObject = &Object{
 		Name: "Default",
 	}
-	c.Model.Objects = append(c.Model.Objects, c.CurrentObject)
+	c.model.Objects = append(c.model.Objects, c.currentObject)
 }
 
 func (c *decodeContext) assureCurrentMesh() {
-	if c.CurrentMesh != nil {
+	if c.currentMesh != nil {
 		return
 	}
 	c.assureCurrentObject()
-	c.CurrentMesh = new(Mesh)
-	c.CurrentObject.Meshes = append(c.CurrentObject.Meshes, c.CurrentMesh)
+	c.currentMesh = new(Mesh)
+	c.currentObject.Meshes = append(c.currentObject.Meshes, c.currentMesh)
 }
