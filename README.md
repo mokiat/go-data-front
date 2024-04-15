@@ -37,9 +37,10 @@ The Scanner API allows you to scan through an OBJ file and receive events for ea
 
 ```go
 func main() {
-	scanner := obj.NewScanner()
 	file, _ := os.Open("example.obj")
 	defer file.Close()
+
+	scanner := obj.NewScanner()
 	scanner.Scan(file, handleEvent)
 }
 
@@ -56,21 +57,23 @@ func handleEvent(event common.Event) error {
 }
 ```
 
-You can find the API documentation **[here](https://godoc.org/github.com/mokiat/go-data-front/scanner/obj)**.
+You can find the API documentation **[here](https://pkg.go.dev/github.com/mokiat/go-data-front/scanner/obj)**.
 
 
 #### Decoder
 
-The Decoder API actually uses the Scanner API and does the correlation for you. What you end up with is an object model that represents the parsed OBJ file.
+The Decoder API uses the Scanner API and does the correlation for you. What you end up with is an object model that represents the parsed OBJ file.
 
 **Example**
 
 ```go
 func main() {
-	decoder := obj.NewDecoder(obj.DefaultLimits())
 	file, _ := os.Open("example.obj")
 	defer file.Close()
+
+	decoder := obj.NewDecoder(obj.DefaultLimits())
 	model, _ := decoder.Decode(file)
+
 	fmt.Printf("Model has %d vertices.\n", len(model.Vertices))
 	fmt.Printf("Model has %d texture coordinates.\n", len(model.TexCoords))
 	fmt.Printf("Model has %d normals.\n", len(model.Normals))
@@ -79,7 +82,7 @@ func main() {
 }
 ```
 
-You can find the API documentation **[here](https://godoc.org/github.com/mokiat/go-data-front/decoder/obj)**.
+You can find the API documentation **[here](https://pkg.go.dev/github.com/mokiat/go-data-front/decoder/obj)**.
 
 ### MTL
 
@@ -105,9 +108,10 @@ The Scanner API allows you to scan through an MTL file and receive events for ea
 
 ```go
 func main() {
-	scanner := mtl.NewScanner()
 	file, _ := os.Open("example.mtl")
 	defer file.Close()
+
+	scanner := mtl.NewScanner()
 	scanner.Scan(file, handleEvent)
 }
 
@@ -124,35 +128,37 @@ func handleEvent(event common.Event) error {
 }
 ```
 
-You can find the API documentation **[here](https://godoc.org/github.com/mokiat/go-data-front/scanner/mtl)**.
+You can find the API documentation **[here](https://pkg.go.dev/github.com/mokiat/go-data-front/scanner/mtl)**.
 
 #### Decoder
 
-The Decoder API actually uses the Scanner API and does the correlation for you. What you end up with is an object model that represents the parsed MTL file.
+The Decoder API uses the Scanner API and does the correlation for you. What you end up with is an object model that represents the parsed MTL file.
 
 **Example**
 
 ```go
 func main() {
-	decoder := mtl.NewDecoder(mtl.DefaultLimits())
 	file, _ := os.Open("example.mtl")
 	defer file.Close()
+
+	decoder := mtl.NewDecoder(mtl.DefaultLimits())
 	model, _ := decoder.Decode(file)
+
 	fmt.Printf("Library has %d materials\n", len(model.Materials))
 	fmt.Printf("First material has name: %s\n",	model.Materials[0].Name)
 }
 ```
 
-You can find the API documentation **[here](https://godoc.org/github.com/mokiat/go-data-front/decoder/mtl)**.
+You can find the API documentation **[here](https://pkg.go.dev/github.com/mokiat/go-data-front/decoder/mtl)**.
 
 ## Developer's Guide
 
-This library uses the **[Ginkgo](https://github.com/onsi/ginkgo)** tool for testing. You will need to set it up.
+This library uses the **[Ginkgo](https://github.com/onsi/ginkgo)** tool for testing.
 
-You can run all the tests with the following command.
+You can run all the tests with the following command from within the project path.
 
 ```bash
-ginkgo -r
+go run github.com/onsi/ginkgo/v2/ginkgo -r
 ```
 
 ## Notes
