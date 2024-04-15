@@ -2,85 +2,85 @@ package mtl_test
 
 import (
 	"errors"
-	"fmt"
-	"io"
 	"os"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/mokiat/go-data-front/common"
 	"github.com/mokiat/go-data-front/internal/testutil"
-	. "github.com/mokiat/go-data-front/scanner/mtl"
+	"github.com/mokiat/go-data-front/scanner/mtl"
 )
 
 var _ = Describe("Scanner", func() {
-	var handlerTracker *testutil.EventHandlerTracker
-	var trackedHandler common.EventHandler
-	var errorHandlerErr error
-	var errorHandler common.EventHandler
-	var scanErr error
-	var scanner common.Scanner
-	var eventCounter int
+	var errStubbed = errors.New("stubbed to fail")
 
-	BeforeEach(func() {
-		handlerTracker = new(testutil.EventHandlerTracker)
-		trackedHandler = handlerTracker.Handle
-		eventCounter = 0
-
-		errorHandlerErr = errors.New("Handler returned error!")
-		errorHandler = func(event common.Event) error {
-			return errorHandlerErr
-		}
-
-		scanErr = nil
-		scanner = NewScanner()
-	})
-
-	scan := func(reader io.Reader, handler common.EventHandler) {
-		scanErr = scanner.Scan(reader, handler)
-	}
-
-	scanFile := func(filename string, handler common.EventHandler) {
-		file, err := os.Open(fmt.Sprintf("testdata/%s", filename))
-		if err != nil {
-			panic(err)
-		}
-		defer file.Close()
-		scan(file, handler)
-	}
+	var (
+		testFile       string
+		handler        common.EventHandler
+		trackedHandler *testutil.EventHandlerTracker
+		eventCounter   int
+		errorHandler   common.EventHandler
+		scanErr        error
+	)
 
 	itShouldNotHaveReturnedAnError := func() {
+		GinkgoHelper()
 		It("scanner should not have returned error", func() {
-			Ω(scanErr).ShouldNot(HaveOccurred())
+			Expect(scanErr).ToNot(HaveOccurred())
 		})
 	}
 
 	itShouldHaveReturnedAnError := func() {
+		GinkgoHelper()
 		It("should have returned an error", func() {
-			Ω(scanErr).Should(HaveOccurred())
+			Expect(scanErr).To(HaveOccurred())
 		})
 	}
 
 	itShouldHaveReturnedHandlerError := func() {
+		GinkgoHelper()
 		It("should have returned handler error", func() {
-			Ω(scanErr).Should(Equal(errorHandlerErr))
+			Expect(scanErr).To(Equal(errStubbed))
 		})
 	}
 
 	assertEvent := func(expected interface{}) {
-		Ω(len(handlerTracker.Events)).Should(BeNumerically(">", eventCounter))
-		Ω(handlerTracker.Events[eventCounter]).Should(Equal(expected))
+		GinkgoHelper()
+		Expect(len(trackedHandler.Events)).To(BeNumerically(">", eventCounter))
+		Expect(trackedHandler.Events[eventCounter]).To(Equal(expected))
 		eventCounter++
 	}
 
 	assertNoMoreEvents := func() {
-		Ω(handlerTracker.Events).Should(HaveLen(eventCounter))
+		GinkgoHelper()
+		Expect(trackedHandler.Events).To(HaveLen(eventCounter))
 	}
+
+	JustBeforeEach(func() {
+		file, err := os.Open(filepath.Join("testdata", testFile))
+		Expect(err).ToNot(HaveOccurred())
+		defer file.Close()
+
+		scanner := mtl.NewScanner()
+		scanErr = scanner.Scan(file, handler)
+	})
+
+	BeforeEach(func() {
+		trackedHandler = new(testutil.EventHandlerTracker)
+		eventCounter = 0
+
+		errorHandler = func(event common.Event) error {
+			return errStubbed
+		}
+
+		handler = trackedHandler.Handle
+	})
 
 	Describe("basic MTL file", func() {
 		BeforeEach(func() {
-			scanFile("valid_basic.mtl", trackedHandler)
+			testFile = "valid_basic.mtl"
 		})
 
 		itShouldNotHaveReturnedAnError()
@@ -89,84 +89,84 @@ var _ = Describe("Scanner", func() {
 			assertEvent(common.CommentEvent{
 				Comment: "This is the beginning of this MTL file.",
 			})
-			assertEvent(MaterialEvent{
+			assertEvent(mtl.MaterialEvent{
 				MaterialName: "MyMaterial",
 			})
-			assertEvent(RGBAmbientColorEvent{
+			assertEvent(mtl.RGBAmbientColorEvent{
 				R: 0.8,
 				G: 0.5,
 				B: 0.2,
 			})
-			assertEvent(RGBDiffuseColorEvent{
+			assertEvent(mtl.RGBDiffuseColorEvent{
 				R: 0.1,
 				G: 0.4,
 				B: 0.7,
 			})
-			assertEvent(RGBSpecularColorEvent{
+			assertEvent(mtl.RGBSpecularColorEvent{
 				R: 0.3,
 				G: 0.2,
 				B: 1.0,
 			})
-			assertEvent(RGBTransmissionFilterEvent{
+			assertEvent(mtl.RGBTransmissionFilterEvent{
 				R: 0.6,
 				G: 0.7,
 				B: 0.8,
 			})
-			assertEvent(RGBEmissiveColorEvent{
+			assertEvent(mtl.RGBEmissiveColorEvent{
 				R: 0.4,
 				G: 0.3,
 				B: 0.9,
 			})
-			assertEvent(DissolveEvent{
+			assertEvent(mtl.DissolveEvent{
 				Amount: 0.4,
 			})
-			assertEvent(SpecularExponentEvent{
+			assertEvent(mtl.SpecularExponentEvent{
 				Amount: 330.0,
 			})
-			assertEvent(AmbientTextureEvent{
+			assertEvent(mtl.AmbientTextureEvent{
 				TexturePath: "textures/ambient.bmp",
 			})
-			assertEvent(DiffuseTextureEvent{
+			assertEvent(mtl.DiffuseTextureEvent{
 				TexturePath: "textures/diffuse.bmp",
 			})
-			assertEvent(SpecularTextureEvent{
+			assertEvent(mtl.SpecularTextureEvent{
 				TexturePath: "textures/specular.bmp",
 			})
-			assertEvent(SpecularExponentTextureEvent{
+			assertEvent(mtl.SpecularExponentTextureEvent{
 				TexturePath: "textures/specular_exponent.bmp",
 			})
-			assertEvent(DissolveTextureEvent{
+			assertEvent(mtl.DissolveTextureEvent{
 				TexturePath: "textures/dissolve.bmp",
 			})
-			assertEvent(EmissiveTextureEvent{
+			assertEvent(mtl.EmissiveTextureEvent{
 				TexturePath: "textures/emissive.png",
 			})
-			assertEvent(BumpTextureEvent{
+			assertEvent(mtl.BumpTextureEvent{
 				TexturePath: "textures/bump.png",
 			})
 			assertNoMoreEvents()
 		})
 	})
 
-	Context("when reading all kinds of ambient colors", func() {
+	When("reading all kinds of ambient colors", func() {
 		BeforeEach(func() {
-			scanFile("valid_ambient_colors.mtl", trackedHandler)
+			testFile = "valid_ambient_colors.mtl"
 		})
 
 		itShouldNotHaveReturnedAnError()
 
 		It("should have scanned all the colors", func() {
-			assertEvent(RGBAmbientColorEvent{
+			assertEvent(mtl.RGBAmbientColorEvent{
 				R: 0.3,
 				G: 0.3,
 				B: 0.3,
 			})
-			assertEvent(RGBAmbientColorEvent{
+			assertEvent(mtl.RGBAmbientColorEvent{
 				R: 0.2,
 				G: 0.2,
 				B: 0.2,
 			})
-			assertEvent(RGBAmbientColorEvent{
+			assertEvent(mtl.RGBAmbientColorEvent{
 				R: 0.5,
 				G: 0.6,
 				B: 0.7,
@@ -175,25 +175,25 @@ var _ = Describe("Scanner", func() {
 		})
 	})
 
-	Context("when reading all kinds of diffuse colors", func() {
+	When("reading all kinds of diffuse colors", func() {
 		BeforeEach(func() {
-			scanFile("valid_diffuse_colors.mtl", trackedHandler)
+			testFile = "valid_diffuse_colors.mtl"
 		})
 
 		itShouldNotHaveReturnedAnError()
 
 		It("should have scanned all the colors", func() {
-			assertEvent(RGBDiffuseColorEvent{
+			assertEvent(mtl.RGBDiffuseColorEvent{
 				R: 0.3,
 				G: 0.3,
 				B: 0.3,
 			})
-			assertEvent(RGBDiffuseColorEvent{
+			assertEvent(mtl.RGBDiffuseColorEvent{
 				R: 0.2,
 				G: 0.2,
 				B: 0.2,
 			})
-			assertEvent(RGBDiffuseColorEvent{
+			assertEvent(mtl.RGBDiffuseColorEvent{
 				R: 0.5,
 				G: 0.6,
 				B: 0.7,
@@ -202,25 +202,25 @@ var _ = Describe("Scanner", func() {
 		})
 	})
 
-	Context("when reading all kinds of specular colors", func() {
+	When("reading all kinds of specular colors", func() {
 		BeforeEach(func() {
-			scanFile("valid_specular_colors.mtl", trackedHandler)
+			testFile = "valid_specular_colors.mtl"
 		})
 
 		itShouldNotHaveReturnedAnError()
 
 		It("should have scanned all the colors", func() {
-			assertEvent(RGBSpecularColorEvent{
+			assertEvent(mtl.RGBSpecularColorEvent{
 				R: 0.3,
 				G: 0.3,
 				B: 0.3,
 			})
-			assertEvent(RGBSpecularColorEvent{
+			assertEvent(mtl.RGBSpecularColorEvent{
 				R: 0.2,
 				G: 0.2,
 				B: 0.2,
 			})
-			assertEvent(RGBSpecularColorEvent{
+			assertEvent(mtl.RGBSpecularColorEvent{
 				R: 0.5,
 				G: 0.6,
 				B: 0.7,
@@ -229,20 +229,20 @@ var _ = Describe("Scanner", func() {
 		})
 	})
 
-	Context("when reading all kinds of transmission filters", func() {
+	When("reading all kinds of transmission filters", func() {
 		BeforeEach(func() {
-			scanFile("valid_transmission_filters.mtl", trackedHandler)
+			testFile = "valid_transmission_filters.mtl"
 		})
 
 		itShouldNotHaveReturnedAnError()
 
 		It("should have scanned all the filters", func() {
-			assertEvent(RGBTransmissionFilterEvent{
+			assertEvent(mtl.RGBTransmissionFilterEvent{
 				R: 0.5,
 				G: 0.6,
 				B: 0.7,
 			})
-			assertEvent(RGBTransmissionFilterEvent{
+			assertEvent(mtl.RGBTransmissionFilterEvent{
 				R: 0.1,
 				G: 0.9,
 				B: 0.2,
@@ -251,25 +251,25 @@ var _ = Describe("Scanner", func() {
 		})
 	})
 
-	Context("when reading all kinds of emissive colors", func() {
+	When("reading all kinds of emissive colors", func() {
 		BeforeEach(func() {
-			scanFile("valid_emissive_colors.mtl", trackedHandler)
+			testFile = "valid_emissive_colors.mtl"
 		})
 
 		itShouldNotHaveReturnedAnError()
 
 		It("should have scanned all the colors", func() {
-			assertEvent(RGBEmissiveColorEvent{
+			assertEvent(mtl.RGBEmissiveColorEvent{
 				R: 0.3,
 				G: 0.3,
 				B: 0.3,
 			})
-			assertEvent(RGBEmissiveColorEvent{
+			assertEvent(mtl.RGBEmissiveColorEvent{
 				R: 0.2,
 				G: 0.2,
 				B: 0.2,
 			})
-			assertEvent(RGBEmissiveColorEvent{
+			assertEvent(mtl.RGBEmissiveColorEvent{
 				R: 0.5,
 				G: 0.6,
 				B: 0.7,
@@ -278,9 +278,9 @@ var _ = Describe("Scanner", func() {
 		})
 	})
 
-	Context("when reading unsupported declarations", func() {
+	When("reading unsupported declarations", func() {
 		BeforeEach(func() {
-			scanFile("valid_unsupported_declarations.mtl", trackedHandler)
+			testFile = "valid_unsupported_declarations.mtl"
 		})
 
 		itShouldNotHaveReturnedAnError()
@@ -290,305 +290,297 @@ var _ = Describe("Scanner", func() {
 		})
 	})
 
-	Context("when reading material without name", func() {
+	When("reading material without name", func() {
 		BeforeEach(func() {
-			scanFile("error_missing_material_name.mtl", trackedHandler)
+			testFile = "error_missing_material_name.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading ambient color without enough values", func() {
+	When("reading ambient color without enough values", func() {
 		BeforeEach(func() {
-			scanFile("error_missing_ambient_color_values.mtl", trackedHandler)
+			testFile = "error_missing_ambient_color_values.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading ambient color with invalid values", func() {
+	When("reading ambient color with invalid values", func() {
 		BeforeEach(func() {
-			scanFile("error_invalid_ambient_color_values.mtl", trackedHandler)
+			testFile = "error_invalid_ambient_color_values.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading diffuse color without enough values", func() {
+	When("reading diffuse color without enough values", func() {
 		BeforeEach(func() {
-			scanFile("error_missing_diffuse_color_values.mtl", trackedHandler)
+			testFile = "error_missing_diffuse_color_values.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading diffuse color with invalid values", func() {
+	When("reading diffuse color with invalid values", func() {
 		BeforeEach(func() {
-			scanFile("error_invalid_diffuse_color_values.mtl", trackedHandler)
+			testFile = "error_invalid_diffuse_color_values.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading specular color without enough values", func() {
+	When("reading specular color without enough values", func() {
 		BeforeEach(func() {
-			scanFile("error_missing_specular_color_values.mtl", trackedHandler)
+			testFile = "error_missing_specular_color_values.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading specular color with invalid values", func() {
+	When("reading specular color with invalid values", func() {
 		BeforeEach(func() {
-			scanFile("error_invalid_specular_color_values.mtl", trackedHandler)
+			testFile = "error_invalid_specular_color_values.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading transmission filter without enough values", func() {
+	When("reading transmission filter without enough values", func() {
 		BeforeEach(func() {
-			scanFile("error_missing_transmission_filter_value.mtl", trackedHandler)
+			testFile = "error_missing_transmission_filter_value.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading transmission filter with invalid values", func() {
+	When("reading transmission filter with invalid values", func() {
 		BeforeEach(func() {
-			scanFile("error_invalid_transmission_filter_values.mtl", trackedHandler)
+			testFile = "error_invalid_transmission_filter_values.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading emissive color without enough values", func() {
+	When("reading emissive color without enough values", func() {
 		BeforeEach(func() {
-			scanFile("error_missing_emissive_color_values.mtl", trackedHandler)
+			testFile = "error_missing_emissive_color_values.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading emissive color with invalid values", func() {
+	When("reading emissive color with invalid values", func() {
 		BeforeEach(func() {
-			scanFile("error_invalid_emissive_color_values.mtl", trackedHandler)
+			testFile = "error_invalid_emissive_color_values.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading dissolve without value", func() {
+	When("reading dissolve without value", func() {
 		BeforeEach(func() {
-			scanFile("error_missing_dissolve_value.mtl", trackedHandler)
+			testFile = "error_missing_dissolve_value.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading dissolve with invalid value", func() {
+	When("reading dissolve with invalid value", func() {
 		BeforeEach(func() {
-			scanFile("error_invalid_dissolve_value.mtl", trackedHandler)
+			testFile = "error_invalid_dissolve_value.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading specular exponent without value", func() {
+	When("reading specular exponent without value", func() {
 		BeforeEach(func() {
-			scanFile("error_missing_specular_exponent_value.mtl", trackedHandler)
+			testFile = "error_missing_specular_exponent_value.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading specular exponent with invalid value", func() {
+	When("reading specular exponent with invalid value", func() {
 		BeforeEach(func() {
-			scanFile("error_invalid_specular_exponent_value.mtl", trackedHandler)
+			testFile = "error_invalid_specular_exponent_value.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading ambient texture without filename param", func() {
+	When("reading ambient texture without filename param", func() {
 		BeforeEach(func() {
-			scanFile("error_missing_ambient_texture_filename.mtl", trackedHandler)
+			testFile = "error_missing_ambient_texture_filename.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading diffuse texture without filename param", func() {
+	When("reading diffuse texture without filename param", func() {
 		BeforeEach(func() {
-			scanFile("error_missing_diffuse_texture_filename.mtl", trackedHandler)
+			testFile = "error_missing_diffuse_texture_filename.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading specular texture without filename param", func() {
+	When("reading specular texture without filename param", func() {
 		BeforeEach(func() {
-			scanFile("error_missing_specular_texture_filename.mtl", trackedHandler)
+			testFile = "error_missing_specular_texture_filename.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading specular exponent texture without filename param", func() {
+	When("reading specular exponent texture without filename param", func() {
 		BeforeEach(func() {
-			scanFile("error_missing_specular_exponent_texture_filename.mtl", trackedHandler)
+			testFile = "error_missing_specular_exponent_texture_filename.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading dissolve texture without filename param", func() {
+	When("reading dissolve texture without filename param", func() {
 		BeforeEach(func() {
-			scanFile("error_missing_dissolve_texture_filename.mtl", trackedHandler)
+			testFile = "error_missing_dissolve_texture_filename.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading emissive texture without filename param", func() {
+	When("reading emissive texture without filename param", func() {
 		BeforeEach(func() {
-			scanFile("error_missing_emissive_texture_filename.mtl", trackedHandler)
+			testFile = "error_missing_emissive_texture_filename.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when reading bump texture without filename param", func() {
+	When("reading bump texture without filename param", func() {
 		BeforeEach(func() {
-			scanFile("error_missing_bump_texture_filename.mtl", trackedHandler)
+			testFile = "error_missing_bump_texture_filename.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when handler returns error on ambient colors", func() {
+	When("handler returns an error", func() {
 		BeforeEach(func() {
-			scanFile("valid_ambient_colors.mtl", errorHandler)
+			handler = errorHandler
 		})
 
-		itShouldHaveReturnedHandlerError()
-	})
+		When("on ambient colors", func() {
+			BeforeEach(func() {
+				testFile = "valid_ambient_colors.mtl"
+			})
 
-	Context("when handler returns error on diffuse colors", func() {
-		BeforeEach(func() {
-			scanFile("valid_diffuse_colors.mtl", errorHandler)
+			itShouldHaveReturnedHandlerError()
 		})
 
-		itShouldHaveReturnedHandlerError()
-	})
+		When("on diffuse colors", func() {
+			BeforeEach(func() {
+				testFile = "valid_diffuse_colors.mtl"
+			})
 
-	Context("when handler returns error on specular colors", func() {
-		BeforeEach(func() {
-			scanFile("valid_specular_colors.mtl", errorHandler)
+			itShouldHaveReturnedHandlerError()
 		})
 
-		itShouldHaveReturnedHandlerError()
-	})
+		When("on specular colors", func() {
+			BeforeEach(func() {
+				testFile = "valid_specular_colors.mtl"
+			})
 
-	Context("when handler returns error on transmission filters", func() {
-		BeforeEach(func() {
-			scanFile("valid_transmission_filters.mtl", errorHandler)
+			itShouldHaveReturnedHandlerError()
 		})
 
-		itShouldHaveReturnedHandlerError()
-	})
+		When("on transmission filters", func() {
+			BeforeEach(func() {
+				testFile = "valid_transmission_filters.mtl"
+			})
 
-	Context("when handler returns error on emissive colors", func() {
-		BeforeEach(func() {
-			scanFile("valid_emissive_colors.mtl", errorHandler)
+			itShouldHaveReturnedHandlerError()
 		})
 
-		itShouldHaveReturnedHandlerError()
-	})
+		When("on emissive colors", func() {
+			BeforeEach(func() {
+				testFile = "valid_emissive_colors.mtl"
+			})
 
-	Context("when handler returns error on dissolves", func() {
-		BeforeEach(func() {
-			scanFile("valid_dissolves.mtl", errorHandler)
+			itShouldHaveReturnedHandlerError()
 		})
 
-		itShouldHaveReturnedHandlerError()
-	})
+		When("on dissolves", func() {
+			BeforeEach(func() {
+				testFile = "valid_dissolves.mtl"
+			})
 
-	Context("when handler returns error on specular exponents", func() {
-		BeforeEach(func() {
-			scanFile("valid_specular_exponents.mtl", errorHandler)
+			itShouldHaveReturnedHandlerError()
 		})
 
-		itShouldHaveReturnedHandlerError()
-	})
+		When("on specular exponents", func() {
+			BeforeEach(func() {
+				testFile = "valid_specular_exponents.mtl"
+			})
 
-	Context("when handler returns error on ambient textures", func() {
-		BeforeEach(func() {
-			scanFile("valid_ambient_textures.mtl", errorHandler)
+			itShouldHaveReturnedHandlerError()
 		})
 
-		itShouldHaveReturnedHandlerError()
-	})
+		When("on ambient textures", func() {
+			BeforeEach(func() {
+				testFile = "valid_ambient_textures.mtl"
+			})
 
-	Context("when handler returns error on diffuse textures", func() {
-		BeforeEach(func() {
-			scanFile("valid_diffuse_textures.mtl", errorHandler)
+			itShouldHaveReturnedHandlerError()
 		})
 
-		itShouldHaveReturnedHandlerError()
-	})
+		When("on diffuse textures", func() {
+			BeforeEach(func() {
+				testFile = "valid_diffuse_textures.mtl"
+			})
 
-	Context("when handler returns error on specular textures", func() {
-		BeforeEach(func() {
-			scanFile("valid_specular_textures.mtl", errorHandler)
+			itShouldHaveReturnedHandlerError()
 		})
 
-		itShouldHaveReturnedHandlerError()
-	})
+		When("on specular textures", func() {
+			BeforeEach(func() {
+				testFile = "valid_specular_textures.mtl"
+			})
 
-	Context("when handler returns error on specular exponent textures", func() {
-		BeforeEach(func() {
-			scanFile("valid_specular_exponent_textures.mtl", errorHandler)
+			itShouldHaveReturnedHandlerError()
 		})
 
-		itShouldHaveReturnedHandlerError()
-	})
+		When("on specular exponent textures", func() {
+			BeforeEach(func() {
+				testFile = "valid_specular_exponent_textures.mtl"
+			})
 
-	Context("when handler returns error on dissolve textures", func() {
-		BeforeEach(func() {
-			scanFile("valid_dissolve_textures.mtl", errorHandler)
+			itShouldHaveReturnedHandlerError()
 		})
 
-		itShouldHaveReturnedHandlerError()
-	})
+		When("on dissolve textures", func() {
+			BeforeEach(func() {
+				testFile = "valid_dissolve_textures.mtl"
+			})
 
-	Context("when handler returns error on emissive textures", func() {
-		BeforeEach(func() {
-			scanFile("valid_emissive_textures.mtl", errorHandler)
+			itShouldHaveReturnedHandlerError()
 		})
 
-		itShouldHaveReturnedHandlerError()
-	})
+		When("on emissive textures", func() {
+			BeforeEach(func() {
+				testFile = "valid_emissive_textures.mtl"
+			})
 
-	Context("when handler returns error on bump textures", func() {
-		BeforeEach(func() {
-			scanFile("valid_bump_textures.mtl", errorHandler)
+			itShouldHaveReturnedHandlerError()
 		})
 
-		itShouldHaveReturnedHandlerError()
-	})
+		When("on bump textures", func() {
+			BeforeEach(func() {
+				testFile = "valid_bump_textures.mtl"
+			})
 
-	Context("when reading fails", func() {
-		var readerErr error
-
-		BeforeEach(func() {
-			readerErr = errors.New("Failed to read!")
-			reader := testutil.NewFailingReader(readerErr)
-			scan(reader, trackedHandler)
-		})
-
-		It("scanner should have returned reader error", func() {
-			Ω(scanErr).Should(Equal(readerErr))
+			itShouldHaveReturnedHandlerError()
 		})
 	})
 })

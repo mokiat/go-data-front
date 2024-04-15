@@ -1,208 +1,215 @@
 package obj_test
 
 import (
-	. "github.com/mokiat/go-data-front/decoder/obj"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/mokiat/go-data-front/decoder/obj"
 )
 
-var _ = Describe("Model", func() {
+var _ = Describe("Reference", func() {
+	var reference obj.Reference
 
-	Describe("Reference", func() {
-		var reference Reference
+	BeforeEach(func() {
+		reference = obj.Reference{
+			VertexIndex:   10,
+			TexCoordIndex: 15,
+			NormalIndex:   20,
+		}
+	})
+
+	It("has tex coord index", func() {
+		Expect(reference.HasTexCoord()).To(BeTrue())
+	})
+
+	It("has normal index", func() {
+		Expect(reference.HasNormal()).To(BeTrue())
+	})
+
+	When("the tex coord index is set to undefined", func() {
+		BeforeEach(func() {
+			reference.TexCoordIndex = obj.UndefinedIndex
+		})
+
+		It("does not have a tex coord index", func() {
+			Expect(reference.HasTexCoord()).To(BeFalse())
+		})
+	})
+
+	When("the normal index is set to undefined", func() {
+		BeforeEach(func() {
+			reference.NormalIndex = obj.UndefinedIndex
+		})
+
+		It("does not have a normal index", func() {
+			Expect(reference.HasNormal()).To(BeFalse())
+		})
+	})
+})
+
+var _ = Describe("Object", func() {
+	var object *obj.Object
+
+	BeforeEach(func() {
+		object = new(obj.Object)
+	})
+
+	When("the object has multiple meshes", func() {
+		var (
+			firstMesh  *obj.Mesh
+			secondMesh *obj.Mesh
+		)
 
 		BeforeEach(func() {
-			reference = Reference{
-				VertexIndex:   10,
-				TexCoordIndex: 15,
-				NormalIndex:   20,
+			firstMesh = &obj.Mesh{
+				MaterialName: "First",
 			}
+			secondMesh = &obj.Mesh{
+				MaterialName: "Second",
+			}
+			object.Meshes = append(object.Meshes, firstMesh, secondMesh)
 		})
 
-		It("has tex coord index", func() {
-			Ω(reference.HasTexCoord()).Should(BeTrue())
+		It("is possible to find mesh by material name", func() {
+			mesh, found := object.FindMesh("First")
+			Expect(found).To(BeTrue())
+			Expect(mesh).To(Equal(firstMesh))
+
+			mesh, found = object.FindMesh("Second")
+			Expect(found).To(BeTrue())
+			Expect(mesh).To(Equal(secondMesh))
 		})
 
-		It("has normal index", func() {
-			Ω(reference.HasNormal()).Should(BeTrue())
+		It("will not find unexisting meshes", func() {
+			_, found := object.FindMesh("Missing")
+			Expect(found).To(BeFalse())
+		})
+	})
+})
+
+var _ = Describe("Model", func() {
+	var model *obj.Model
+
+	BeforeEach(func() {
+		model = new(obj.Model)
+	})
+
+	When("the model has multiple vertices", func() {
+		var (
+			firstVertex  obj.Vertex
+			secondVertex obj.Vertex
+		)
+
+		BeforeEach(func() {
+			firstVertex = obj.Vertex{
+				X: 1.0, Y: 2.0, Z: 3.0,
+			}
+			secondVertex = obj.Vertex{
+				X: 4.0, Y: 5.0, Z: 6.0,
+			}
+			model.Vertices = append(model.Vertices, firstVertex, secondVertex)
 		})
 
-		Context("when tex coord index is set to undefined", func() {
-			BeforeEach(func() {
-				reference.TexCoordIndex = UndefinedIndex
+		It("is possible to get vertex from reference", func() {
+			vertex := model.GetVertexFromReference(obj.Reference{
+				VertexIndex: 0,
 			})
+			Expect(vertex).To(Equal(firstVertex))
 
-			It("does not have a tex coord index", func() {
-				Ω(reference.HasTexCoord()).Should(BeFalse())
+			vertex = model.GetVertexFromReference(obj.Reference{
+				VertexIndex: 1,
 			})
-		})
-
-		Context("when normal index is set to undefined", func() {
-			BeforeEach(func() {
-				reference.NormalIndex = UndefinedIndex
-			})
-
-			It("does not have a normal index", func() {
-				Ω(reference.HasNormal()).Should(BeFalse())
-			})
+			Expect(vertex).To(Equal(secondVertex))
 		})
 	})
 
-	Describe("Object", func() {
-		var object *Object
+	When("the model has multiple texture coordinates", func() {
+		var (
+			firstTexCoord  obj.TexCoord
+			secondTexCoord obj.TexCoord
+		)
 
 		BeforeEach(func() {
-			object = new(Object)
+			firstTexCoord = obj.TexCoord{
+				U: 1.0, V: 2.0, W: 3.0,
+			}
+			secondTexCoord = obj.TexCoord{
+				U: 4.0, V: 5.0, W: 6.0,
+			}
+			model.TexCoords = append(model.TexCoords, firstTexCoord, secondTexCoord)
 		})
 
-		Context("when object has multiple meshes", func() {
-			var firstMesh *Mesh
-			var secondMesh *Mesh
-
-			BeforeEach(func() {
-				firstMesh = &Mesh{
-					MaterialName: "First",
-				}
-				secondMesh = &Mesh{
-					MaterialName: "Second",
-				}
-				object.Meshes = append(object.Meshes, firstMesh, secondMesh)
+		It("is possible to get vertex from reference", func() {
+			texCoord := model.GetTexCoordFromReference(obj.Reference{
+				TexCoordIndex: 0,
 			})
+			Expect(texCoord).To(Equal(firstTexCoord))
 
-			It("is possible to find mesh by material name", func() {
-				mesh, found := object.FindMesh("First")
-				Ω(found).Should(BeTrue())
-				Ω(mesh).Should(Equal(firstMesh))
-
-				mesh, found = object.FindMesh("Second")
-				Ω(found).Should(BeTrue())
-				Ω(mesh).Should(Equal(secondMesh))
+			texCoord = model.GetTexCoordFromReference(obj.Reference{
+				TexCoordIndex: 1,
 			})
-
-			It("will not find unexisting meshes", func() {
-				_, found := object.FindMesh("Missing")
-				Ω(found).Should(BeFalse())
-			})
+			Expect(texCoord).To(Equal(secondTexCoord))
 		})
 	})
 
-	Describe("Model", func() {
-		var model *Model
+	When("the model has multiple normals", func() {
+		var (
+			firstNormal  obj.Normal
+			secondNormal obj.Normal
+		)
 
 		BeforeEach(func() {
-			model = new(Model)
+			firstNormal = obj.Normal{
+				X: 1.0, Y: 2.0, Z: 3.0,
+			}
+			secondNormal = obj.Normal{
+				X: 4.0, Y: 5.0, Z: 6.0,
+			}
+			model.Normals = append(model.Normals, firstNormal, secondNormal)
 		})
 
-		Context("when model has multiple vertices", func() {
-			var firstVertex Vertex
-			var secondVertex Vertex
-
-			BeforeEach(func() {
-				firstVertex = Vertex{
-					X: 1.0, Y: 2.0, Z: 3.0,
-				}
-				secondVertex = Vertex{
-					X: 4.0, Y: 5.0, Z: 6.0,
-				}
-				model.Vertices = append(model.Vertices, firstVertex, secondVertex)
+		It("is possible to get vertex from reference", func() {
+			normal := model.GetNormalFromReference(obj.Reference{
+				NormalIndex: 0,
 			})
+			Expect(normal).To(Equal(firstNormal))
 
-			It("is possible to get vertex from reference", func() {
-				vertex := model.GetVertexFromReference(Reference{
-					VertexIndex: 0,
-				})
-				Ω(vertex).Should(Equal(firstVertex))
-
-				vertex = model.GetVertexFromReference(Reference{
-					VertexIndex: 1,
-				})
-				Ω(vertex).Should(Equal(secondVertex))
+			normal = model.GetNormalFromReference(obj.Reference{
+				NormalIndex: 1,
 			})
+			Expect(normal).To(Equal(secondNormal))
+		})
+	})
+
+	When("the model has multiple objects", func() {
+		var (
+			firstObject  *obj.Object
+			secondObject *obj.Object
+		)
+
+		BeforeEach(func() {
+			firstObject = &obj.Object{
+				Name: "First",
+			}
+			secondObject = &obj.Object{
+				Name: "Second",
+			}
+			model.Objects = append(model.Objects, firstObject, secondObject)
 		})
 
-		Context("when model has multiple texture coordinates", func() {
-			var firstTexCoord TexCoord
-			var secondTexCoord TexCoord
+		It("is possible to find existing objects", func() {
+			object, found := model.FindObject("First")
+			Expect(found).To(BeTrue())
+			Expect(object).To(Equal(firstObject))
 
-			BeforeEach(func() {
-				firstTexCoord = TexCoord{
-					U: 1.0, V: 2.0, W: 3.0,
-				}
-				secondTexCoord = TexCoord{
-					U: 4.0, V: 5.0, W: 6.0,
-				}
-				model.TexCoords = append(model.TexCoords, firstTexCoord, secondTexCoord)
-			})
-
-			It("is possible to get vertex from reference", func() {
-				texCoord := model.GetTexCoordFromReference(Reference{
-					TexCoordIndex: 0,
-				})
-				Ω(texCoord).Should(Equal(firstTexCoord))
-
-				texCoord = model.GetTexCoordFromReference(Reference{
-					TexCoordIndex: 1,
-				})
-				Ω(texCoord).Should(Equal(secondTexCoord))
-			})
+			object, found = model.FindObject("Second")
+			Expect(found).To(BeTrue())
+			Expect(object).To(Equal(secondObject))
 		})
 
-		Context("when model has multiple normals", func() {
-			var firstNormal Normal
-			var secondNormal Normal
-
-			BeforeEach(func() {
-				firstNormal = Normal{
-					X: 1.0, Y: 2.0, Z: 3.0,
-				}
-				secondNormal = Normal{
-					X: 4.0, Y: 5.0, Z: 6.0,
-				}
-				model.Normals = append(model.Normals, firstNormal, secondNormal)
-			})
-
-			It("is possible to get vertex from reference", func() {
-				normal := model.GetNormalFromReference(Reference{
-					NormalIndex: 0,
-				})
-				Ω(normal).Should(Equal(firstNormal))
-
-				normal = model.GetNormalFromReference(Reference{
-					NormalIndex: 1,
-				})
-				Ω(normal).Should(Equal(secondNormal))
-			})
-		})
-
-		Context("when model has multiple objects", func() {
-			var firstObject *Object
-			var secondObject *Object
-
-			BeforeEach(func() {
-				firstObject = &Object{
-					Name: "First",
-				}
-				secondObject = &Object{
-					Name: "Second",
-				}
-				model.Objects = append(model.Objects, firstObject, secondObject)
-			})
-
-			It("is possible to find existing objects", func() {
-				object, found := model.FindObject("First")
-				Ω(found).Should(BeTrue())
-				Ω(object).Should(Equal(firstObject))
-
-				object, found = model.FindObject("Second")
-				Ω(found).Should(BeTrue())
-				Ω(object).Should(Equal(secondObject))
-			})
-
-			It("will not find unexisting objects", func() {
-				_, found := model.FindObject("Missing")
-				Ω(found).Should(BeFalse())
-			})
+		It("will not find unexisting objects", func() {
+			_, found := model.FindObject("Missing")
+			Expect(found).To(BeFalse())
 		})
 	})
 })

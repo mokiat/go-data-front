@@ -1,22 +1,22 @@
 package mtl_test
 
 import (
-	. "github.com/mokiat/go-data-front/decoder/mtl"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/mokiat/go-data-front/decoder/mtl"
 )
 
-var _ = Describe("Model", func() {
-	Describe("DefaultMaterial", func() {
-		var material *Material
+var _ = Describe("Material", func() {
+	var material *mtl.Material
 
+	Describe("DefaultMaterial", func() {
 		BeforeEach(func() {
-			material = DefaultMaterial()
+			material = mtl.DefaultMaterial()
 		})
 
 		It("should have white ambient color", func() {
-			Ω(material.AmbientColor).Should(Equal(RGBColor{
+			Expect(material.AmbientColor).To(Equal(mtl.RGBColor{
 				R: 1.0,
 				G: 1.0,
 				B: 1.0,
@@ -24,7 +24,7 @@ var _ = Describe("Model", func() {
 		})
 
 		It("should have white diffuse color", func() {
-			Ω(material.DiffuseColor).Should(Equal(RGBColor{
+			Expect(material.DiffuseColor).To(Equal(mtl.RGBColor{
 				R: 1.0,
 				G: 1.0,
 				B: 1.0,
@@ -32,7 +32,7 @@ var _ = Describe("Model", func() {
 		})
 
 		It("should have no specular color", func() {
-			Ω(material.SpecularColor).Should(Equal(RGBColor{
+			Expect(material.SpecularColor).To(Equal(mtl.RGBColor{
 				R: 0.0,
 				G: 0.0,
 				B: 0.0,
@@ -40,7 +40,7 @@ var _ = Describe("Model", func() {
 		})
 
 		It("should have no emissive color", func() {
-			Ω(material.EmissiveColor).Should(Equal(RGBColor{
+			Expect(material.EmissiveColor).To(Equal(mtl.RGBColor{
 				R: 0.0,
 				G: 0.0,
 				B: 0.0,
@@ -48,53 +48,55 @@ var _ = Describe("Model", func() {
 		})
 
 		It("should have a factor of 1.0 dissolve", func() {
-			Ω(material.Dissolve).Should(Equal(1.0))
+			Expect(material.Dissolve).To(Equal(1.0))
 		})
 
 		It("should have a white transmission filter", func() {
-			Ω(material.TransmissionFilter).Should(Equal(RGBColor{
+			Expect(material.TransmissionFilter).To(Equal(mtl.RGBColor{
 				R: 1.0,
 				G: 1.0,
 				B: 1.0,
 			}))
 		})
 	})
+})
 
-	Describe("Library", func() {
-		var library *Library
+var _ = Describe("Library", func() {
+	var library *mtl.Library
+
+	BeforeEach(func() {
+		library = new(mtl.Library)
+	})
+
+	When("a library has multiple materials", func() {
+		var (
+			blueMaterial *mtl.Material
+			redMaterial  *mtl.Material
+		)
 
 		BeforeEach(func() {
-			library = new(Library)
+			blueMaterial = &mtl.Material{
+				Name: "Blue",
+			}
+			redMaterial = &mtl.Material{
+				Name: "Red",
+			}
+			library.Materials = []*mtl.Material{blueMaterial, redMaterial}
 		})
 
-		Context("when library has multiple materials", func() {
-			var blueMaterial *Material
-			var redMaterial *Material
+		It("is possible to find existing material by name", func() {
+			material, found := library.FindMaterial("Blue")
+			Expect(found).To(BeTrue())
+			Expect(material).To(Equal(blueMaterial))
 
-			BeforeEach(func() {
-				blueMaterial = &Material{
-					Name: "Blue",
-				}
-				redMaterial = &Material{
-					Name: "Red",
-				}
-				library.Materials = []*Material{blueMaterial, redMaterial}
-			})
+			material, found = library.FindMaterial("Red")
+			Expect(found).To(BeTrue())
+			Expect(material).To(Equal(redMaterial))
+		})
 
-			It("is possible to find existing material by name", func() {
-				material, found := library.FindMaterial("Blue")
-				Ω(found).Should(BeTrue())
-				Ω(material).Should(Equal(blueMaterial))
-
-				material, found = library.FindMaterial("Red")
-				Ω(found).Should(BeTrue())
-				Ω(material).Should(Equal(redMaterial))
-			})
-
-			It("is will not find unexisting materials", func() {
-				_, found := library.FindMaterial("Green")
-				Ω(found).Should(BeFalse())
-			})
+		It("is will not find unexisting materials", func() {
+			_, found := library.FindMaterial("Green")
+			Expect(found).To(BeFalse())
 		})
 	})
 })

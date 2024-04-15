@@ -1,83 +1,82 @@
 package obj_test
 
 import (
-	"errors"
-	"fmt"
-	"io"
 	"os"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/mokiat/go-data-front/common"
 	"github.com/mokiat/go-data-front/internal/testutil"
-	. "github.com/mokiat/go-data-front/scanner/obj"
+	"github.com/mokiat/go-data-front/scanner/obj"
 )
 
 var _ = Describe("Scanner", func() {
-	var handlerTracker *testutil.EventHandlerTracker
-	var trackedHandler common.EventHandler
-	var scanErr error
-	var scanner common.Scanner
-	var eventCounter int
-
-	BeforeEach(func() {
-		handlerTracker = new(testutil.EventHandlerTracker)
-		trackedHandler = handlerTracker.Handle
-		eventCounter = 0
-
-		scanErr = nil
-		scanner = NewScanner()
-	})
-
-	scan := func(reader io.Reader, handler common.EventHandler) {
-		scanErr = scanner.Scan(reader, handler)
-	}
-
-	scanFile := func(filename string, handler common.EventHandler) {
-		file, err := os.Open(fmt.Sprintf("testdata/%s", filename))
-		if err != nil {
-			panic(err)
-		}
-		defer file.Close()
-		scan(file, handler)
-	}
-
+	var (
+		testFile       string
+		handler        common.EventHandler
+		trackedHandler *testutil.EventHandlerTracker
+		eventCounter   int
+		scanErr        error
+	)
 	itShouldNotHaveReturnedAnError := func() {
+		GinkgoHelper()
 		It("scanner should not have returned error", func() {
-			Ω(scanErr).ShouldNot(HaveOccurred())
+			Expect(scanErr).ToNot(HaveOccurred())
 		})
 	}
 
 	itShouldHaveReturnedAnError := func() {
+		GinkgoHelper()
 		It("should have returned an error", func() {
-			Ω(scanErr).Should(HaveOccurred())
+			Expect(scanErr).To(HaveOccurred())
 		})
 	}
 
 	assertEvent := func(expected interface{}) {
-		Ω(len(handlerTracker.Events)).Should(BeNumerically(">", eventCounter))
-		Ω(handlerTracker.Events[eventCounter]).Should(Equal(expected))
+		GinkgoHelper()
+		Expect(len(trackedHandler.Events)).To(BeNumerically(">", eventCounter))
+		Expect(trackedHandler.Events[eventCounter]).To(Equal(expected))
 		eventCounter++
 	}
 
 	assertAnyEvent := func() {
-		Ω(len(handlerTracker.Events)).Should(BeNumerically(">", eventCounter))
+		GinkgoHelper()
+		Expect(len(trackedHandler.Events)).To(BeNumerically(">", eventCounter))
 		eventCounter++
 	}
 
 	assertAnyEvents := func(count int) {
-		Ω(len(handlerTracker.Events)).Should(BeNumerically(">", eventCounter+count))
+		GinkgoHelper()
+		Expect(len(trackedHandler.Events)).To(BeNumerically(">", eventCounter+count))
 		eventCounter += count
 	}
 
 	assertNoMoreEvents := func() {
-		Ω(handlerTracker.Events).Should(HaveLen(eventCounter))
+		GinkgoHelper()
+		Expect(trackedHandler.Events).To(HaveLen(eventCounter))
 	}
+
+	JustBeforeEach(func() {
+		file, err := os.Open(filepath.Join("testdata", testFile))
+		Expect(err).ToNot(HaveOccurred())
+		defer file.Close()
+
+		scanner := obj.NewScanner()
+		scanErr = scanner.Scan(file, handler)
+	})
+
+	BeforeEach(func() {
+		trackedHandler = new(testutil.EventHandlerTracker)
+		eventCounter = 0
+
+		handler = trackedHandler.Handle
+	})
 
 	Describe("basic OBJ file", func() {
 		BeforeEach(func() {
-			scanFile("valid_basic.obj", trackedHandler)
+			testFile = "valid_basic.obj"
 		})
 
 		itShouldNotHaveReturnedAnError()
@@ -86,90 +85,90 @@ var _ = Describe("Scanner", func() {
 			assertEvent(common.CommentEvent{
 				Comment: "This is the beginning of this OBJ file.",
 			})
-			assertEvent(MaterialLibraryEvent{
+			assertEvent(obj.MaterialLibraryEvent{
 				FilePath: "valid_basic.mtl",
 			})
-			assertEvent(VertexEvent{
+			assertEvent(obj.VertexEvent{
 				X: -1.0, Y: 1.0, Z: -1.0, W: 1.0,
 			})
-			assertEvent(VertexEvent{
+			assertEvent(obj.VertexEvent{
 				X: -1.0, Y: -1.0, Z: 1.0, W: 1.0,
 			})
-			assertEvent(VertexEvent{
+			assertEvent(obj.VertexEvent{
 				X: 1.0, Y: -1.0, Z: -1.0, W: 1.0,
 			})
-			assertEvent(VertexEvent{
+			assertEvent(obj.VertexEvent{
 				X: 1.0, Y: 1.0, Z: 1.0, W: 1.0,
 			})
-			assertEvent(TexCoordEvent{
+			assertEvent(obj.TexCoordEvent{
 				U: 0.0, V: 0.0, W: 0.0,
 			})
-			assertEvent(TexCoordEvent{
+			assertEvent(obj.TexCoordEvent{
 				U: 1.0, V: 1.0, W: 0.0,
 			})
-			assertEvent(TexCoordEvent{
+			assertEvent(obj.TexCoordEvent{
 				U: 1.0, V: 0.0, W: 0.0,
 			})
-			assertEvent(TexCoordEvent{
+			assertEvent(obj.TexCoordEvent{
 				U: 0.0, V: 1.0, W: 0.0,
 			})
-			assertEvent(NormalEvent{
+			assertEvent(obj.NormalEvent{
 				X: 0.0, Y: 1.0, Z: 0.0,
 			})
-			assertEvent(NormalEvent{
+			assertEvent(obj.NormalEvent{
 				X: 1.0, Y: 0.0, Z: 0.0,
 			})
-			assertEvent(NormalEvent{
+			assertEvent(obj.NormalEvent{
 				X: 0.0, Y: 0.0, Z: 1.0,
 			})
-			assertEvent(ObjectEvent{
+			assertEvent(obj.ObjectEvent{
 				ObjectName: "MyObject",
 			})
-			assertEvent(MaterialReferenceEvent{
+			assertEvent(obj.MaterialReferenceEvent{
 				MaterialName: "BlueMaterial",
 			})
-			assertEvent(FaceStartEvent{})
-			assertEvent(ReferenceSetStartEvent{})
-			assertEvent(VertexReferenceEvent{
+			assertEvent(obj.FaceStartEvent{})
+			assertEvent(obj.ReferenceSetStartEvent{})
+			assertEvent(obj.VertexReferenceEvent{
 				VertexIndex: 1,
 			})
-			assertEvent(TexCoordReferenceEvent{
+			assertEvent(obj.TexCoordReferenceEvent{
 				TexCoordIndex: 4,
 			})
-			assertEvent(NormalReferenceEvent{
+			assertEvent(obj.NormalReferenceEvent{
 				NormalIndex: 1,
 			})
-			assertEvent(ReferenceSetEndEvent{})
-			assertEvent(ReferenceSetStartEvent{})
-			assertEvent(VertexReferenceEvent{
+			assertEvent(obj.ReferenceSetEndEvent{})
+			assertEvent(obj.ReferenceSetStartEvent{})
+			assertEvent(obj.VertexReferenceEvent{
 				VertexIndex: 2,
 			})
-			assertEvent(TexCoordReferenceEvent{
+			assertEvent(obj.TexCoordReferenceEvent{
 				TexCoordIndex: 1,
 			})
-			assertEvent(NormalReferenceEvent{
+			assertEvent(obj.NormalReferenceEvent{
 				NormalIndex: 1,
 			})
-			assertEvent(ReferenceSetEndEvent{})
-			assertEvent(ReferenceSetStartEvent{})
-			assertEvent(VertexReferenceEvent{
+			assertEvent(obj.ReferenceSetEndEvent{})
+			assertEvent(obj.ReferenceSetStartEvent{})
+			assertEvent(obj.VertexReferenceEvent{
 				VertexIndex: 3,
 			})
-			assertEvent(TexCoordReferenceEvent{
+			assertEvent(obj.TexCoordReferenceEvent{
 				TexCoordIndex: 3,
 			})
-			assertEvent(NormalReferenceEvent{
+			assertEvent(obj.NormalReferenceEvent{
 				NormalIndex: 2,
 			})
-			assertEvent(ReferenceSetEndEvent{})
-			assertEvent(FaceEndEvent{})
+			assertEvent(obj.ReferenceSetEndEvent{})
+			assertEvent(obj.FaceEndEvent{})
 			assertNoMoreEvents()
 		})
 	})
 
-	Context("when a file with all kinds of comments is scanned", func() {
+	When("a file with all kinds of comments is scanned", func() {
 		BeforeEach(func() {
-			scanFile("valid_comments.obj", trackedHandler)
+			testFile = "valid_comments.obj"
 		})
 
 		itShouldNotHaveReturnedAnError()
@@ -205,333 +204,319 @@ var _ = Describe("Scanner", func() {
 		})
 	})
 
-	Context("when a file with all kinds of vertices is scanned", func() {
+	When("a file with all kinds of vertices is scanned", func() {
 		BeforeEach(func() {
-			scanFile("valid_vertices.obj", trackedHandler)
+			testFile = "valid_vertices.obj"
 		})
 
 		itShouldNotHaveReturnedAnError()
 
 		It("should have scanned the vertices", func() {
-			assertEvent(VertexEvent{
+			assertEvent(obj.VertexEvent{
 				X: 1.0, Y: 1.0, Z: -1.0, W: 1.0,
 			})
-			assertEvent(VertexEvent{
+			assertEvent(obj.VertexEvent{
 				X: -1.0, Y: -1.0, Z: 1.0, W: 0.5,
 			})
 			assertNoMoreEvents()
 		})
 	})
-	Context("when a file with all kinds of texture coordinates is scanned", func() {
+	When("a file with all kinds of texture coordinates is scanned", func() {
 		BeforeEach(func() {
-			scanFile("valid_texcoords.obj", trackedHandler)
+			testFile = "valid_texcoords.obj"
 		})
 
 		itShouldNotHaveReturnedAnError()
 
 		It("should have scanned the texture coordinates", func() {
-			assertEvent(TexCoordEvent{
+			assertEvent(obj.TexCoordEvent{
 				U: 1.6, V: 0.0, W: 0.0,
 			})
-			assertEvent(TexCoordEvent{
+			assertEvent(obj.TexCoordEvent{
 				U: 0.0, V: -0.5, W: 0.0,
 			})
-			assertEvent(TexCoordEvent{
+			assertEvent(obj.TexCoordEvent{
 				U: -0.2, V: 1.4, W: 3.0,
 			})
 			assertNoMoreEvents()
 		})
 	})
 
-	Context("when a file with all kinds of normals is scanned", func() {
+	When("a file with all kinds of normals is scanned", func() {
 		BeforeEach(func() {
-			scanFile("valid_normals.obj", trackedHandler)
+			testFile = "valid_normals.obj"
 		})
 
 		itShouldNotHaveReturnedAnError()
 
 		It("should have scanned the normals", func() {
-			assertEvent(NormalEvent{
+			assertEvent(obj.NormalEvent{
 				X: 1.0, Y: 0.0, Z: 0.0,
 			})
-			assertEvent(NormalEvent{
+			assertEvent(obj.NormalEvent{
 				X: -1.0, Y: -1.0, Z: 1.0,
 			})
 			assertNoMoreEvents()
 		})
 	})
 
-	Context("when a file with all kinds of objects is scanned", func() {
+	When("a file with all kinds of objects is scanned", func() {
 		BeforeEach(func() {
-			scanFile("valid_objects.obj", trackedHandler)
+			testFile = "valid_objects.obj"
 		})
 
 		itShouldNotHaveReturnedAnError()
 
 		It("should have scanned the objects", func() {
-			assertEvent(ObjectEvent{
+			assertEvent(obj.ObjectEvent{
 				ObjectName: "FirstObject",
 			})
-			assertEvent(ObjectEvent{
+			assertEvent(obj.ObjectEvent{
 				ObjectName: "LastObject",
 			})
 			assertNoMoreEvents()
 		})
 	})
-	Context("when a file with all kinds of coord references is scanned", func() {
+	When("a file with all kinds of coord references is scanned", func() {
 		BeforeEach(func() {
-			scanFile("valid_faces.obj", trackedHandler)
+			testFile = "valid_faces.obj"
 		})
 
 		itShouldNotHaveReturnedAnError()
 
 		It("should have scanned them correctly", func() {
 			// First face
-			assertEvent(FaceStartEvent{})
-			assertEvent(ReferenceSetStartEvent{})
-			assertEvent(VertexReferenceEvent{
+			assertEvent(obj.FaceStartEvent{})
+			assertEvent(obj.ReferenceSetStartEvent{})
+			assertEvent(obj.VertexReferenceEvent{
 				VertexIndex: 1,
 			})
-			assertEvent(ReferenceSetEndEvent{})
-			assertEvent(ReferenceSetStartEvent{})
-			assertEvent(VertexReferenceEvent{
+			assertEvent(obj.ReferenceSetEndEvent{})
+			assertEvent(obj.ReferenceSetStartEvent{})
+			assertEvent(obj.VertexReferenceEvent{
 				VertexIndex: 2,
 			})
-			assertEvent(ReferenceSetEndEvent{})
-			assertEvent(ReferenceSetStartEvent{})
-			assertEvent(VertexReferenceEvent{
+			assertEvent(obj.ReferenceSetEndEvent{})
+			assertEvent(obj.ReferenceSetStartEvent{})
+			assertEvent(obj.VertexReferenceEvent{
 				VertexIndex: 3,
 			})
-			assertEvent(ReferenceSetEndEvent{})
-			assertEvent(FaceEndEvent{})
+			assertEvent(obj.ReferenceSetEndEvent{})
+			assertEvent(obj.FaceEndEvent{})
 
 			// Second face
-			assertEvent(FaceStartEvent{})
-			assertEvent(ReferenceSetStartEvent{})
-			assertEvent(VertexReferenceEvent{
+			assertEvent(obj.FaceStartEvent{})
+			assertEvent(obj.ReferenceSetStartEvent{})
+			assertEvent(obj.VertexReferenceEvent{
 				VertexIndex: 2,
 			})
-			assertEvent(TexCoordReferenceEvent{
+			assertEvent(obj.TexCoordReferenceEvent{
 				TexCoordIndex: 1,
 			})
-			assertEvent(ReferenceSetEndEvent{})
-			assertEvent(ReferenceSetStartEvent{})
-			assertEvent(VertexReferenceEvent{
+			assertEvent(obj.ReferenceSetEndEvent{})
+			assertEvent(obj.ReferenceSetStartEvent{})
+			assertEvent(obj.VertexReferenceEvent{
 				VertexIndex: 3,
 			})
-			assertEvent(TexCoordReferenceEvent{
+			assertEvent(obj.TexCoordReferenceEvent{
 				TexCoordIndex: 2,
 			})
-			assertEvent(ReferenceSetEndEvent{})
-			assertEvent(ReferenceSetStartEvent{})
-			assertEvent(VertexReferenceEvent{
+			assertEvent(obj.ReferenceSetEndEvent{})
+			assertEvent(obj.ReferenceSetStartEvent{})
+			assertEvent(obj.VertexReferenceEvent{
 				VertexIndex: 4,
 			})
-			assertEvent(TexCoordReferenceEvent{
+			assertEvent(obj.TexCoordReferenceEvent{
 				TexCoordIndex: 3,
 			})
-			assertEvent(ReferenceSetEndEvent{})
-			assertEvent(FaceEndEvent{})
+			assertEvent(obj.ReferenceSetEndEvent{})
+			assertEvent(obj.FaceEndEvent{})
 
 			// Third face
-			assertEvent(FaceStartEvent{})
-			assertEvent(ReferenceSetStartEvent{})
-			assertEvent(VertexReferenceEvent{
+			assertEvent(obj.FaceStartEvent{})
+			assertEvent(obj.ReferenceSetStartEvent{})
+			assertEvent(obj.VertexReferenceEvent{
 				VertexIndex: 4,
 			})
-			assertEvent(NormalReferenceEvent{
+			assertEvent(obj.NormalReferenceEvent{
 				NormalIndex: 5,
 			})
-			assertEvent(ReferenceSetEndEvent{})
-			assertEvent(ReferenceSetStartEvent{})
-			assertEvent(VertexReferenceEvent{
+			assertEvent(obj.ReferenceSetEndEvent{})
+			assertEvent(obj.ReferenceSetStartEvent{})
+			assertEvent(obj.VertexReferenceEvent{
 				VertexIndex: 6,
 			})
-			assertEvent(NormalReferenceEvent{
+			assertEvent(obj.NormalReferenceEvent{
 				NormalIndex: 7,
 			})
-			assertEvent(ReferenceSetEndEvent{})
-			assertEvent(ReferenceSetStartEvent{})
-			assertEvent(VertexReferenceEvent{
+			assertEvent(obj.ReferenceSetEndEvent{})
+			assertEvent(obj.ReferenceSetStartEvent{})
+			assertEvent(obj.VertexReferenceEvent{
 				VertexIndex: 8,
 			})
-			assertEvent(NormalReferenceEvent{
+			assertEvent(obj.NormalReferenceEvent{
 				NormalIndex: 9,
 			})
-			assertEvent(ReferenceSetEndEvent{})
-			assertEvent(FaceEndEvent{})
+			assertEvent(obj.ReferenceSetEndEvent{})
+			assertEvent(obj.FaceEndEvent{})
 
 			// Fourth face
-			assertEvent(FaceStartEvent{})
-			assertEvent(ReferenceSetStartEvent{})
-			assertEvent(VertexReferenceEvent{
+			assertEvent(obj.FaceStartEvent{})
+			assertEvent(obj.ReferenceSetStartEvent{})
+			assertEvent(obj.VertexReferenceEvent{
 				VertexIndex: 1,
 			})
-			assertEvent(TexCoordReferenceEvent{
+			assertEvent(obj.TexCoordReferenceEvent{
 				TexCoordIndex: 2,
 			})
-			assertEvent(NormalReferenceEvent{
+			assertEvent(obj.NormalReferenceEvent{
 				NormalIndex: 3,
 			})
-			assertEvent(ReferenceSetEndEvent{})
-			assertEvent(ReferenceSetStartEvent{})
-			assertEvent(VertexReferenceEvent{
+			assertEvent(obj.ReferenceSetEndEvent{})
+			assertEvent(obj.ReferenceSetStartEvent{})
+			assertEvent(obj.VertexReferenceEvent{
 				VertexIndex: 2,
 			})
-			assertEvent(TexCoordReferenceEvent{
+			assertEvent(obj.TexCoordReferenceEvent{
 				TexCoordIndex: 3,
 			})
-			assertEvent(NormalReferenceEvent{
+			assertEvent(obj.NormalReferenceEvent{
 				NormalIndex: 4,
 			})
-			assertEvent(ReferenceSetEndEvent{})
-			assertEvent(ReferenceSetStartEvent{})
-			assertEvent(VertexReferenceEvent{
+			assertEvent(obj.ReferenceSetEndEvent{})
+			assertEvent(obj.ReferenceSetStartEvent{})
+			assertEvent(obj.VertexReferenceEvent{
 				VertexIndex: 3,
 			})
-			assertEvent(TexCoordReferenceEvent{
+			assertEvent(obj.TexCoordReferenceEvent{
 				TexCoordIndex: 4,
 			})
-			assertEvent(NormalReferenceEvent{
+			assertEvent(obj.NormalReferenceEvent{
 				NormalIndex: 5,
 			})
-			assertEvent(ReferenceSetEndEvent{})
-			assertEvent(FaceEndEvent{})
+			assertEvent(obj.ReferenceSetEndEvent{})
+			assertEvent(obj.FaceEndEvent{})
 
 			assertNoMoreEvents()
 		})
 	})
 
-	Context("when a file with all kinds of material libraries is scanned", func() {
+	When("a file with all kinds of material libraries is scanned", func() {
 		BeforeEach(func() {
-			scanFile("valid_material_libraries.obj", trackedHandler)
+			testFile = "valid_material_libraries.obj"
 		})
 
 		itShouldNotHaveReturnedAnError()
 
 		It("should have scanned the material libraries", func() {
-			assertEvent(MaterialLibraryEvent{
+			assertEvent(obj.MaterialLibraryEvent{
 				FilePath: "valid.mtl",
 			})
-			assertEvent(MaterialLibraryEvent{
+			assertEvent(obj.MaterialLibraryEvent{
 				FilePath: "extension01.mtl",
 			})
-			assertEvent(MaterialLibraryEvent{
+			assertEvent(obj.MaterialLibraryEvent{
 				FilePath: "extension02.mtl",
 			})
 			assertNoMoreEvents()
 		})
 	})
 
-	Context("when a file with all kinds of material references is scanned", func() {
+	When("a file with all kinds of material references is scanned", func() {
 		BeforeEach(func() {
-			scanFile("valid_material_references.obj", trackedHandler)
+			testFile = "valid_material_references.obj"
 		})
 
 		itShouldNotHaveReturnedAnError()
 
 		It("should have scanned the material references", func() {
-			assertEvent(MaterialReferenceEvent{
+			assertEvent(obj.MaterialReferenceEvent{
 				MaterialName: "",
 			})
-			assertEvent(MaterialReferenceEvent{
+			assertEvent(obj.MaterialReferenceEvent{
 				MaterialName: "MyMaterial",
 			})
 			assertNoMoreEvents()
 		})
 	})
 
-	Context("when a file with insufficient vertex data is scanned", func() {
+	When("a file with insufficient vertex data is scanned", func() {
 		BeforeEach(func() {
-			scanFile("error_insufficient_vertex_data.obj", trackedHandler)
+			testFile = "error_insufficient_vertex_data.obj"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when a file with insufficient texture coordinate data is scanned", func() {
+	When("a file with insufficient texture coordinate data is scanned", func() {
 		BeforeEach(func() {
-			scanFile("error_insufficient_texcoord_data.obj", trackedHandler)
+			testFile = "error_insufficient_texcoord_data.obj"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when a file with insufficient normal data is scanned", func() {
+	When("a file with insufficient normal data is scanned", func() {
 		BeforeEach(func() {
-			scanFile("error_insufficient_normal_data.obj", trackedHandler)
+			testFile = "error_insufficient_normal_data.obj"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when a file with an unnamed object is scanned", func() {
+	When("a file with an unnamed object is scanned", func() {
 		BeforeEach(func() {
-			scanFile("error_empty_object_name.obj", trackedHandler)
+			testFile = "error_empty_object_name.obj"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when a file with corrupt vertex is scanned", func() {
+	When("a file with corrupt vertex is scanned", func() {
 		BeforeEach(func() {
-			scanFile("error_corrupt_vertex.obj", trackedHandler)
+			testFile = "error_corrupt_vertex.obj"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when a file with corrupt texture coordinate is scanned", func() {
+	When("a file with corrupt texture coordinate is scanned", func() {
 		BeforeEach(func() {
-			scanFile("error_corrupt_texcoord.obj", trackedHandler)
+			testFile = "error_corrupt_texcoord.obj"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when a file with corrupt normal is scanned", func() {
+	When("a file with corrupt normal is scanned", func() {
 		BeforeEach(func() {
-			scanFile("error_corrupt_normal.obj", trackedHandler)
+			testFile = "error_corrupt_normal.obj"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when a file with corrupt vertex reference is scanned", func() {
+	When("a file with corrupt vertex reference is scanned", func() {
 		BeforeEach(func() {
-			scanFile("error_corrupt_vertex_reference.obj", trackedHandler)
+			testFile = "error_corrupt_vertex_reference.obj"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when a file with corrupt texture coordinate reference is scanned", func() {
+	When("a file with corrupt texture coordinate reference is scanned", func() {
 		BeforeEach(func() {
-			scanFile("error_corrupt_texcoord_reference.obj", trackedHandler)
+			testFile = "error_corrupt_texcoord_reference.obj"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when a file with corrupt normal reference is scanned", func() {
+	When("a file with corrupt normal reference is scanned", func() {
 		BeforeEach(func() {
-			scanFile("error_corrupt_normal_reference.obj", trackedHandler)
+			testFile = "error_corrupt_normal_reference.obj"
 		})
 
 		itShouldHaveReturnedAnError()
-	})
-
-	Context("when reading fails", func() {
-		var readerErr error
-
-		BeforeEach(func() {
-			readerErr = errors.New("Failed to read!")
-			reader := testutil.NewFailingReader(readerErr)
-			scan(reader, trackedHandler)
-		})
-
-		It("scanner should have returned reader error", func() {
-			Ω(scanErr).Should(Equal(readerErr))
-		})
 	})
 })
