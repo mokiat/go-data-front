@@ -1,91 +1,88 @@
 package common_test
 
 import (
-	"fmt"
-	"io"
+	"bytes"
 	"os"
-
-	. "github.com/mokiat/go-data-front/common"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/mokiat/go-data-front/common"
 )
 
 var _ = Describe("LineScanner", func() {
-	var reader io.ReadCloser
-	var lineScanner LineScanner
+	var lineScanner common.LineScanner
 
-	openFile := func(filename string) io.ReadCloser {
-		file, err := os.Open(filename)
-		if err != nil {
-			panic(err)
-		}
-		return file
+	openForScanning := func(fileName string) common.LineScanner {
+		GinkgoHelper()
+		data, err := os.ReadFile(filepath.Join("testdata", fileName))
+		Expect(err).ToNot(HaveOccurred())
+		return common.NewLineScanner(bytes.NewReader(data))
 	}
 
-	openForScanning := func(fileName string) {
-		reader = openFile(fmt.Sprintf("testdata/%s", fileName))
-		lineScanner = NewLineScanner(reader)
-	}
-
-	readNextLine := func() Line {
-		Ω(lineScanner.Scan()).Should(BeTrue())
-		Ω(lineScanner.Err()).ShouldNot(HaveOccurred())
+	readNextLine := func() common.Line {
+		GinkgoHelper()
+		Expect(lineScanner.Scan()).To(BeTrue())
+		Expect(lineScanner.Err()).ToNot(HaveOccurred())
 		return lineScanner.Line()
 	}
 
 	assertNoMoreLines := func() {
-		Ω(lineScanner.Scan()).Should(BeFalse())
-		Ω(lineScanner.Err()).ShouldNot(HaveOccurred())
+		GinkgoHelper()
+		Expect(lineScanner.Scan()).To(BeFalse())
+		Expect(lineScanner.Err()).ToNot(HaveOccurred())
 	}
 
-	assertIsBlank := func(line Line) {
-		Ω(line.IsBlank()).Should(BeTrue())
+	assertIsBlank := func(line common.Line) {
+		GinkgoHelper()
+		Expect(line.IsBlank()).To(BeTrue())
 	}
 
-	assertIsNotBlank := func(line Line) {
-		Ω(line.IsBlank()).Should(BeFalse())
+	assertIsNotBlank := func(line common.Line) {
+		GinkgoHelper()
+		Expect(line.IsBlank()).To(BeFalse())
 	}
 
-	assertIsComment := func(line Line, value string) {
-		Ω(line.IsComment()).Should(BeTrue())
-		Ω(line.Comment()).Should(Equal(value))
+	assertIsComment := func(line common.Line, value string) {
+		GinkgoHelper()
+		Expect(line.IsComment()).To(BeTrue())
+		Expect(line.Comment()).To(Equal(value))
 	}
 
-	assertIsNotComment := func(line Line) {
-		Ω(line.IsComment()).Should(BeFalse())
+	assertIsNotComment := func(line common.Line) {
+		GinkgoHelper()
+		Expect(line.IsComment()).To(BeFalse())
 	}
 
-	assertIsCommand := func(line Line, name string) {
-		Ω(line.IsCommand()).Should(BeTrue())
-		Ω(line.HasCommandName(name)).Should(BeTrue())
-		Ω(line.CommandName()).Should(Equal(name))
+	assertIsCommand := func(line common.Line, name string) {
+		GinkgoHelper()
+		Expect(line.IsCommand()).To(BeTrue())
+		Expect(line.HasCommandName(name)).To(BeTrue())
+		Expect(line.CommandName()).To(Equal(name))
 	}
 
-	assertCommandParams := func(line Line, params ...string) {
-		Ω(line.ParamCount()).Should(Equal(len(params)))
+	assertCommandParams := func(line common.Line, params ...string) {
+		GinkgoHelper()
+		Expect(line.ParamCount()).To(Equal(len(params)))
 		for index, param := range params {
-			Ω(line.StringParam(index)).Should(Equal(param))
+			Expect(line.StringParam(index)).To(Equal(param))
 		}
 	}
 
 	BeforeEach(func() {
-		reader = nil
-	})
-
-	AfterEach(func() {
-		if reader != nil {
-			reader.Close()
-		}
+		lineScanner = nil
 	})
 
 	Describe("scanning blank lines", func() {
-		var comment Line
-		var blank Line
-		var command Line
+		var (
+			comment common.Line
+			blank   common.Line
+			command common.Line
+		)
 
 		BeforeEach(func() {
-			openForScanning("line_scanner_blank_lines.txt")
+			lineScanner = openForScanning("line_scanner_blank_lines.txt")
 			comment = readNextLine()
 			blank = readNextLine()
 			command = readNextLine()
@@ -103,22 +100,24 @@ var _ = Describe("LineScanner", func() {
 	})
 
 	Describe("scanning comments", func() {
-		var firstComment Line
-		var command Line
-		var tightComment Line
-		var point Line
-		var firstMultiLineComment Line
-		var secondMultiLineComment Line
-		var normal Line
-		var emptyComment Line
-		var blank Line
-		var object Line
-		var hashComment Line
-		var complicated Line
-		var lastComment Line
+		var (
+			firstComment           common.Line
+			command                common.Line
+			tightComment           common.Line
+			point                  common.Line
+			firstMultiLineComment  common.Line
+			secondMultiLineComment common.Line
+			normal                 common.Line
+			emptyComment           common.Line
+			blank                  common.Line
+			object                 common.Line
+			hashComment            common.Line
+			complicated            common.Line
+			lastComment            common.Line
+		)
 
 		BeforeEach(func() {
-			openForScanning("line_scanner_comments.txt")
+			lineScanner = openForScanning("line_scanner_comments.txt")
 			firstComment = readNextLine()
 			command = readNextLine()
 			tightComment = readNextLine()
@@ -157,7 +156,7 @@ var _ = Describe("LineScanner", func() {
 
 	Describe("scanning command names", func() {
 		BeforeEach(func() {
-			openForScanning("line_scanner_command_names.txt")
+			lineScanner = openForScanning("line_scanner_command_names.txt")
 		})
 
 		It("can scan all the command names", func() {
@@ -175,15 +174,17 @@ var _ = Describe("LineScanner", func() {
 	})
 
 	Describe("scanning parameters", func() {
-		var blank Line
-		var noParams Line
-		var stringParams Line
-		var intParams Line
-		var floatParams Line
-		var referencesParams Line
+		var (
+			noParams         common.Line
+			blank            common.Line
+			stringParams     common.Line
+			intParams        common.Line
+			floatParams      common.Line
+			referencesParams common.Line
+		)
 
 		BeforeEach(func() {
-			openForScanning("line_scanner_parameters.txt")
+			lineScanner = openForScanning("line_scanner_parameters.txt")
 			noParams = readNextLine()
 			blank = readNextLine()
 			stringParams = readNextLine()
@@ -194,115 +195,114 @@ var _ = Describe("LineScanner", func() {
 		})
 
 		It("can scan commands without parameters", func() {
-			Ω(noParams.ParamCount()).Should(Equal(0))
-		})
-
-		It("blank lines have zero parameters", func() {
-			Ω(blank.ParamCount()).Should(Equal(0))
+			Expect(noParams.ParamCount()).To(BeZero())
+			Expect(blank.ParamCount()).To(BeZero())
 		})
 
 		It("can scan proper number of string parameters", func() {
-			Ω(stringParams.ParamCount()).Should(Equal(4))
+			Expect(stringParams.ParamCount()).To(Equal(4))
 		})
 
 		It("can scan proper number of int parameters", func() {
-			Ω(intParams.ParamCount()).Should(Equal(2))
+			Expect(intParams.ParamCount()).To(Equal(2))
 		})
 
 		It("can scan proper number of float parameters", func() {
-			Ω(floatParams.ParamCount()).Should(Equal(3))
+			Expect(floatParams.ParamCount()).To(Equal(3))
 		})
 
 		It("can scan string parameters when strings", func() {
-			Ω(stringParams.StringParam(0)).Should(Equal("hello"))
-			Ω(stringParams.StringParam(1)).Should(Equal("complex/param"))
-			Ω(stringParams.StringParam(2)).Should(Equal("\"quoted\""))
-			Ω(stringParams.StringParam(3)).Should(Equal("?123?"))
+			Expect(stringParams.StringParam(0)).To(Equal("hello"))
+			Expect(stringParams.StringParam(1)).To(Equal("complex/param"))
+			Expect(stringParams.StringParam(2)).To(Equal("\"quoted\""))
+			Expect(stringParams.StringParam(3)).To(Equal("?123?"))
 		})
 
 		It("can scan string parameters when ints", func() {
-			Ω(intParams.StringParam(0)).Should(Equal("3"))
-			Ω(intParams.StringParam(1)).Should(Equal("-50"))
+			Expect(intParams.StringParam(0)).To(Equal("3"))
+			Expect(intParams.StringParam(1)).To(Equal("-50"))
 		})
 
 		It("can scan string parameters when floats", func() {
-			Ω(floatParams.StringParam(0)).Should(Equal("1.0"))
-			Ω(floatParams.StringParam(1)).Should(Equal("-13.33"))
-			Ω(floatParams.StringParam(2)).Should(Equal(".3"))
+			Expect(floatParams.StringParam(0)).To(Equal("1.0"))
+			Expect(floatParams.StringParam(1)).To(Equal("-13.33"))
+			Expect(floatParams.StringParam(2)).To(Equal(".3"))
 		})
 
 		It("can scan int parameters when ints", func() {
 			value, err := intParams.IntParam(0)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(value).Should(Equal(int64(3)))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(value).To(Equal(int64(3)))
 
 			value, err = intParams.IntParam(1)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(value).Should(Equal(int64(-50)))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(value).To(Equal(int64(-50)))
 		})
 
 		It("cannot scan int parameters when strings", func() {
 			_, err := stringParams.IntParam(0)
-			Ω(err).Should(HaveOccurred())
+			Expect(err).To(HaveOccurred())
 		})
 
 		It("cannot scan int parameters when floats", func() {
 			_, err := floatParams.IntParam(0)
-			Ω(err).Should(HaveOccurred())
+			Expect(err).To(HaveOccurred())
 		})
 
 		It("can scan float parameters when floats", func() {
 			value, err := floatParams.FloatParam(0)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(value).Should(BeNumerically("~", 1.0))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(value).To(BeNumerically("~", 1.0))
 
 			value, err = floatParams.FloatParam(1)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(value).Should(BeNumerically("~", -13.33))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(value).To(BeNumerically("~", -13.33))
 
 			value, err = floatParams.FloatParam(2)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(value).Should(BeNumerically("~", 0.3))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(value).To(BeNumerically("~", 0.3))
 		})
 
 		It("cannot scan float parameters when strings", func() {
 			_, err := stringParams.FloatParam(0)
-			Ω(err).Should(HaveOccurred())
+			Expect(err).To(HaveOccurred())
 		})
 
 		It("can scan float parameters when ints", func() {
 			value, err := intParams.FloatParam(0)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(value).Should(BeNumerically("~", 3))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(value).To(BeNumerically("~", 3))
 
 			value, err = intParams.FloatParam(1)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(value).Should(BeNumerically("~", -50))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(value).To(BeNumerically("~", -50))
 		})
 
 		It("can scan reference sets when strings", func() {
 			referenceSet := stringParams.ReferenceSetParam(0)
-			Ω(referenceSet.Count()).Should(Equal(1))
-			Ω(referenceSet.StringReference(0)).Should(Equal("hello"))
+			Expect(referenceSet.Count()).To(Equal(1))
+			Expect(referenceSet.StringReference(0)).To(Equal("hello"))
 		})
 
 		It("can scan reference sets when ints", func() {
 			referenceSet := intParams.ReferenceSetParam(0)
-			Ω(referenceSet.Count()).Should(Equal(1))
-			Ω(referenceSet.StringReference(0)).Should(Equal("3"))
+			Expect(referenceSet.Count()).To(Equal(1))
+			Expect(referenceSet.StringReference(0)).To(Equal("3"))
 		})
 
 		It("can scan reference sets when floats", func() {
 			referenceSet := floatParams.ReferenceSetParam(0)
-			Ω(referenceSet.Count()).Should(Equal(1))
-			Ω(referenceSet.StringReference(0)).Should(Equal("1.0"))
+			Expect(referenceSet.Count()).To(Equal(1))
+			Expect(referenceSet.StringReference(0)).To(Equal("1.0"))
 		})
 
 		Describe("ReferenceSet", func() {
-			var singleReferenceSet ReferenceSet
-			var doubleReferenceSet ReferenceSet
-			var trippleReferenceSet ReferenceSet
-			var skipReferenceSet ReferenceSet
+			var (
+				singleReferenceSet  common.ReferenceSet
+				doubleReferenceSet  common.ReferenceSet
+				trippleReferenceSet common.ReferenceSet
+				skipReferenceSet    common.ReferenceSet
+			)
 
 			BeforeEach(func() {
 				singleReferenceSet = referencesParams.ReferenceSetParam(0)
@@ -312,75 +312,77 @@ var _ = Describe("LineScanner", func() {
 			})
 
 			It("can parse single references", func() {
-				Ω(singleReferenceSet.Count()).Should(Equal(1))
-				Ω(singleReferenceSet.StringReference(0)).Should(Equal("1"))
+				Expect(singleReferenceSet.Count()).To(Equal(1))
+				Expect(singleReferenceSet.StringReference(0)).To(Equal("1"))
 			})
 
 			It("can parse double references", func() {
-				Ω(doubleReferenceSet.Count()).Should(Equal(2))
-				Ω(doubleReferenceSet.StringReference(0)).Should(Equal("2"))
-				Ω(doubleReferenceSet.StringReference(1)).Should(Equal("3"))
+				Expect(doubleReferenceSet.Count()).To(Equal(2))
+				Expect(doubleReferenceSet.StringReference(0)).To(Equal("2"))
+				Expect(doubleReferenceSet.StringReference(1)).To(Equal("3"))
 			})
 
 			It("can parse trippe references", func() {
-				Ω(trippleReferenceSet.Count()).Should(Equal(3))
-				Ω(trippleReferenceSet.StringReference(0)).Should(Equal("4"))
-				Ω(trippleReferenceSet.StringReference(1)).Should(Equal("abc"))
-				Ω(trippleReferenceSet.StringReference(2)).Should(Equal("6"))
+				Expect(trippleReferenceSet.Count()).To(Equal(3))
+				Expect(trippleReferenceSet.StringReference(0)).To(Equal("4"))
+				Expect(trippleReferenceSet.StringReference(1)).To(Equal("abc"))
+				Expect(trippleReferenceSet.StringReference(2)).To(Equal("6"))
 			})
 
 			It("can parse skip references", func() {
-				Ω(skipReferenceSet.Count()).Should(Equal(3))
-				Ω(skipReferenceSet.StringReference(0)).Should(Equal("7.3"))
-				Ω(skipReferenceSet.IsBlank(0)).Should(BeFalse())
-				Ω(skipReferenceSet.StringReference(1)).Should(Equal(""))
-				Ω(skipReferenceSet.IsBlank(1)).Should(BeTrue())
-				Ω(skipReferenceSet.StringReference(2)).Should(Equal("8"))
-				Ω(skipReferenceSet.IsBlank(2)).Should(BeFalse())
+				Expect(skipReferenceSet.Count()).To(Equal(3))
+				Expect(skipReferenceSet.StringReference(0)).To(Equal("7.3"))
+				Expect(skipReferenceSet.IsBlank(0)).To(BeFalse())
+				Expect(skipReferenceSet.StringReference(1)).To(Equal(""))
+				Expect(skipReferenceSet.IsBlank(1)).To(BeTrue())
+				Expect(skipReferenceSet.StringReference(2)).To(Equal("8"))
+				Expect(skipReferenceSet.IsBlank(2)).To(BeFalse())
 			})
 
 			It("can return int reference when int", func() {
 				reference, err := singleReferenceSet.IntReference(0)
-				Ω(err).ShouldNot(HaveOccurred())
-				Ω(reference).Should(Equal(int64(1)))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(reference).To(Equal(int64(1)))
 			})
 
 			It("cannot return int reference when string", func() {
 				_, err := trippleReferenceSet.IntReference(1)
-				Ω(err).Should(HaveOccurred())
+				Expect(err).To(HaveOccurred())
 			})
 
 			It("cannot return int reference when float", func() {
 				_, err := skipReferenceSet.IntReference(0)
-				Ω(err).Should(HaveOccurred())
+				Expect(err).To(HaveOccurred())
 			})
 
 			It("can return float reference when float", func() {
 				reference, err := skipReferenceSet.FloatReference(0)
-				Ω(err).ShouldNot(HaveOccurred())
-				Ω(reference).Should(Equal(float64(7.3)))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(reference).To(Equal(float64(7.3)))
 			})
 
 			It("can return float reference when int", func() {
 				reference, err := singleReferenceSet.FloatReference(0)
-				Ω(err).ShouldNot(HaveOccurred())
-				Ω(reference).Should(Equal(float64(1.0)))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(reference).To(Equal(float64(1.0)))
 			})
 
 			It("cannot return float reference when string", func() {
 				_, err := trippleReferenceSet.FloatReference(1)
-				Ω(err).Should(HaveOccurred())
+				Expect(err).To(HaveOccurred())
 			})
 		})
 	})
 
 	Describe("scanning logical lines", func() {
-		var first Line
-		var second Line
-		var third Line
+		var (
+			first  common.Line
+			second common.Line
+			third  common.Line
+		)
 
 		BeforeEach(func() {
-			openForScanning("line_scanner_logical_line.txt")
+			lineScanner = openForScanning("line_scanner_logical_line.txt")
 			first = readNextLine()
 			second = readNextLine()
 			third = readNextLine()

@@ -1,71 +1,75 @@
 package mtl_test
 
 import (
-	"fmt"
 	"os"
-
-	. "github.com/mokiat/go-data-front/decoder/mtl"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/mokiat/go-data-front/decoder/mtl"
 )
 
 var _ = Describe("Decoder", func() {
-	var decoder Decoder
-	var limits DecodeLimits
-	var library *Library
-	var decodeErr error
+	var (
+		testFile string
+		limits   mtl.DecodeLimits
 
-	decodeFile := func(filename string) {
-		file, err := os.Open(fmt.Sprintf("testdata/%s", filename))
-		if err != nil {
-			panic(err)
-		}
-		defer file.Close()
-		decoder = NewDecoder(limits)
-		library, decodeErr = decoder.Decode(file)
-	}
+		library   *mtl.Library
+		decodeErr error
+	)
 
 	itShouldHaveReturnedAnError := func() {
+		GinkgoHelper()
 		It("should have returned an error", func() {
-			Ω(decodeErr).Should(HaveOccurred())
+			Expect(decodeErr).To(HaveOccurred())
 		})
 	}
 
 	itShouldNotHaveReturnedAnError := func() {
+		GinkgoHelper()
 		It("should not have returned an error", func() {
-			Ω(decodeErr).ShouldNot(HaveOccurred())
+			Expect(decodeErr).ToNot(HaveOccurred())
 		})
 	}
 
-	BeforeEach(func() {
-		limits = DefaultLimits()
+	JustBeforeEach(func() {
+		file, err := os.Open(filepath.Join("testdata", testFile))
+		Expect(err).ToNot(HaveOccurred())
+		defer file.Close()
+
+		decoder := mtl.NewDecoder(limits)
+		library, decodeErr = decoder.Decode(file)
 	})
 
-	Context("when a basic file is decoded", func() {
+	BeforeEach(func() {
+		limits = mtl.DefaultLimits()
+	})
+
+	When("a basic file is decoded", func() {
 		BeforeEach(func() {
-			decodeFile("valid_basic.mtl")
+			testFile = "valid_basic.mtl"
 		})
 
 		itShouldNotHaveReturnedAnError()
 
 		It("should have decoded one single material", func() {
-			Ω(library.Materials).Should(HaveLen(1))
+			Expect(library.Materials).To(HaveLen(1))
 		})
 
-		Describe("material data", func() {
-			var material *Material
+		Context("material data", func() {
+			var material *mtl.Material
 
-			BeforeEach(func() {
+			JustBeforeEach(func() {
 				material = library.Materials[0]
 			})
 
 			It("should have decoded material name", func() {
-				Ω(material.Name).Should(Equal("TestMaterial"))
+				Expect(material.Name).To(Equal("TestMaterial"))
 			})
 
 			It("should have decoded ambient color", func() {
-				Ω(material.AmbientColor).Should(Equal(RGBColor{
+				Expect(material.AmbientColor).To(Equal(mtl.RGBColor{
 					R: 1.0,
 					G: 0.5,
 					B: 0.1,
@@ -73,7 +77,7 @@ var _ = Describe("Decoder", func() {
 			})
 
 			It("should have decoded diffuse color", func() {
-				Ω(material.DiffuseColor).Should(Equal(RGBColor{
+				Expect(material.DiffuseColor).To(Equal(mtl.RGBColor{
 					R: 0.5,
 					G: 0.7,
 					B: 0.3,
@@ -81,7 +85,7 @@ var _ = Describe("Decoder", func() {
 			})
 
 			It("should have decoded specular color", func() {
-				Ω(material.SpecularColor).Should(Equal(RGBColor{
+				Expect(material.SpecularColor).To(Equal(mtl.RGBColor{
 					R: 0.2,
 					G: 0.4,
 					B: 0.8,
@@ -89,7 +93,7 @@ var _ = Describe("Decoder", func() {
 			})
 
 			It("should have decoded transmission filter", func() {
-				Ω(material.TransmissionFilter).Should(Equal(RGBColor{
+				Expect(material.TransmissionFilter).To(Equal(mtl.RGBColor{
 					R: 0.3,
 					G: 1.0,
 					B: 0.4,
@@ -97,7 +101,7 @@ var _ = Describe("Decoder", func() {
 			})
 
 			It("should have decoded emissive color", func() {
-				Ω(material.EmissiveColor).Should(Equal(RGBColor{
+				Expect(material.EmissiveColor).To(Equal(mtl.RGBColor{
 					R: 0.4,
 					G: 0.3,
 					B: 0.9,
@@ -105,57 +109,57 @@ var _ = Describe("Decoder", func() {
 			})
 
 			It("should have decoded specular exponent", func() {
-				Ω(material.SpecularExponent).Should(Equal(650.0))
+				Expect(material.SpecularExponent).To(Equal(650.0))
 			})
 
 			It("should have decoded dissolve", func() {
-				Ω(material.Dissolve).Should(Equal(0.7))
+				Expect(material.Dissolve).To(Equal(0.7))
 			})
 
 			It("should have decoded ambient texture", func() {
-				Ω(material.AmbientTexture).Should(Equal("ambient.png"))
+				Expect(material.AmbientTexture).To(Equal("ambient.png"))
 			})
 
 			It("should have decoded diffuse texture", func() {
-				Ω(material.DiffuseTexture).Should(Equal("diffuse.png"))
+				Expect(material.DiffuseTexture).To(Equal("diffuse.png"))
 			})
 
 			It("should have decoded specular texture", func() {
-				Ω(material.SpecularTexture).Should(Equal("specular.png"))
+				Expect(material.SpecularTexture).To(Equal("specular.png"))
 			})
 
 			It("should have decoded specular exponent texture", func() {
-				Ω(material.SpecularExponentTexture).Should(Equal("specular_exponent.png"))
+				Expect(material.SpecularExponentTexture).To(Equal("specular_exponent.png"))
 			})
 
 			It("should have decoded dissolve texture", func() {
-				Ω(material.DissolveTexture).Should(Equal("dissolve.png"))
+				Expect(material.DissolveTexture).To(Equal("dissolve.png"))
 			})
 
 			It("should have decoded emissive texture", func() {
-				Ω(material.EmissiveTexture).Should(Equal("emissive.png"))
+				Expect(material.EmissiveTexture).To(Equal("emissive.png"))
 			})
 
 			It("should have decoded bump texture", func() {
-				Ω(material.BumpTexture).Should(Equal("bump.png"))
+				Expect(material.BumpTexture).To(Equal("bump.png"))
 			})
 		})
 	})
 
-	Context("when a file with multiple materials is decoded", func() {
-		JustBeforeEach(func() {
-			decodeFile("valid_multiple_materials.mtl")
+	When("a file with multiple materials is decoded", func() {
+		BeforeEach(func() {
+			testFile = "valid_multiple_materials.mtl"
 		})
 
 		itShouldNotHaveReturnedAnError()
 
 		It("should have decoded all materials", func() {
-			Ω(library.Materials).Should(HaveLen(2))
-			Ω(library.Materials[0].Name).Should(Equal("FirstMaterial"))
-			Ω(library.Materials[1].Name).Should(Equal("SecondMaterial"))
+			Expect(library.Materials).To(HaveLen(2))
+			Expect(library.Materials[0].Name).To(Equal("FirstMaterial"))
+			Expect(library.Materials[1].Name).To(Equal("SecondMaterial"))
 		})
 
-		Context("when the number of materials is larger than the limit", func() {
+		When("the number of materials is larger than the limit", func() {
 			BeforeEach(func() {
 				limits.MaxMaterialCount = 1
 			})
@@ -164,127 +168,129 @@ var _ = Describe("Decoder", func() {
 		})
 	})
 
-	Context("when decoding ambient color without material", func() {
+	When("decoding ambient color without material", func() {
 		BeforeEach(func() {
-			decodeFile("error_ambient_color_no_material.mtl")
+			testFile = "error_ambient_color_no_material.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when decoding diffuse color without material", func() {
+	When("decoding diffuse color without material", func() {
 		BeforeEach(func() {
-			decodeFile("error_diffuse_color_no_material.mtl")
+			testFile = "error_diffuse_color_no_material.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when decoding specular color without material", func() {
+	When("decoding specular color without material", func() {
 		BeforeEach(func() {
-			decodeFile("error_specular_color_no_material.mtl")
+			testFile = "error_specular_color_no_material.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when decoding transmission filter without material", func() {
+	When("decoding transmission filter without material", func() {
 		BeforeEach(func() {
-			decodeFile("error_transmission_filter_no_material.mtl")
+			testFile = "error_transmission_filter_no_material.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when decoding emissive color without material", func() {
+	When("decoding emissive color without material", func() {
 		BeforeEach(func() {
-			decodeFile("error_emissive_color_no_material.mtl")
+			testFile = "error_emissive_color_no_material.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when decoding specular exponent without material", func() {
+	When("decoding specular exponent without material", func() {
 		BeforeEach(func() {
-			decodeFile("error_specular_exponent_no_material.mtl")
+			testFile = "error_specular_exponent_no_material.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when decoding dissolve without material", func() {
+	When("decoding dissolve without material", func() {
 		BeforeEach(func() {
-			decodeFile("error_dissolve_no_material.mtl")
+			testFile = "error_dissolve_no_material.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when decoding ambient texture without material", func() {
+	When("decoding ambient texture without material", func() {
 		BeforeEach(func() {
-			decodeFile("error_ambient_texture_no_material.mtl")
+			testFile = "error_ambient_texture_no_material.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when decoding diffuse texture without material", func() {
+	When("decoding diffuse texture without material", func() {
 		BeforeEach(func() {
-			decodeFile("error_diffuse_texture_no_material.mtl")
+			testFile = "error_diffuse_texture_no_material.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when decoding specular texture without material", func() {
+	When("decoding specular texture without material", func() {
 		BeforeEach(func() {
-			decodeFile("error_specular_texture_no_material.mtl")
+			testFile = "error_specular_texture_no_material.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when decoding specular exponent texture without material", func() {
+	When("decoding specular exponent texture without material", func() {
 		BeforeEach(func() {
-			decodeFile("error_specular_exponent_texture_no_material.mtl")
+			testFile = "error_specular_exponent_texture_no_material.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when decoding dissolve texture without material", func() {
+	When("decoding dissolve texture without material", func() {
 		BeforeEach(func() {
-			decodeFile("error_dissolve_texture_no_material.mtl")
+			testFile = "error_dissolve_texture_no_material.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when decoding emissive texture without material", func() {
+	When("decoding emissive texture without material", func() {
 		BeforeEach(func() {
-			decodeFile("error_emissive_texture_no_material.mtl")
+			testFile = "error_emissive_texture_no_material.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
 
-	Context("when decoding bump texture without material", func() {
+	When("decoding bump texture without material", func() {
 		BeforeEach(func() {
-			decodeFile("error_bump_texture_no_material.mtl")
+			testFile = "error_bump_texture_no_material.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
 	})
+})
 
-	Describe("Default DecodeLimits", func() {
-		var limits DecodeLimits
+var _ = Describe("DecodeLimits", func() {
+	var limits mtl.DecodeLimits
 
+	Describe("DefaultLimits", func() {
 		BeforeEach(func() {
-			limits = DefaultLimits()
+			limits = mtl.DefaultLimits()
 		})
 
-		It("material limit should be 512", func() {
-			Ω(limits.MaxMaterialCount).Should(Equal(512))
+		Specify("default material limit should be 512", func() {
+			Expect(limits.MaxMaterialCount).To(Equal(512))
 		})
 	})
 })
