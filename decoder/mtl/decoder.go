@@ -98,6 +98,8 @@ func (c *decodeContext) HandleEvent(event common.Event) error {
 		return c.handleSpecularExponent(actual)
 	case scanMTL.DissolveEvent:
 		return c.handleDissolve(actual)
+	case scanMTL.IlluminationEvent:
+		return c.handleIllumination(actual)
 	case scanMTL.AmbientTextureEvent:
 		return c.handleAmbientTexture(actual)
 	case scanMTL.DiffuseTextureEvent:
@@ -199,6 +201,14 @@ func (c *decodeContext) handleDissolve(event scanMTL.DissolveEvent) error {
 		return c.newMissingMaterialError()
 	}
 	c.currentMaterial.Dissolve = event.Amount
+	return nil
+}
+
+func (c *decodeContext) handleIllumination(event scanMTL.IlluminationEvent) error {
+	if c.currentMaterial == nil {
+		return c.newMissingMaterialError()
+	}
+	c.currentMaterial.Illumination = event.Model
 	return nil
 }
 

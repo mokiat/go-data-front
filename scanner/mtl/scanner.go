@@ -72,6 +72,26 @@ type SpecularExponentEvent struct {
 	Amount float64
 }
 
+// IlluminationEvent indicates the illumination model to be used.
+type IlluminationEvent struct {
+
+	// Model specifies the illumination model to be used. The value ranges
+	// between 0 and 10.
+	//
+	// 	0. Color on and Ambient off
+	// 	1. Color on and Ambient on
+	// 	2. Highlight on
+	// 	3. Reflection on and Ray trace on
+	// 	4. Transparency: Glass on, Reflection: Ray trace on
+	// 	5. Reflection: Fresnel on and Ray trace on
+	//	6. Transparency: Refraction on, Reflection: Fresnel off and Ray trace on
+	//	7. Transparency: Refraction on, Reflection: Fresnel on and Ray trace on
+	//	8. Reflection on and Ray trace off
+	//	9. Transparency: Glass on, Reflection: Ray trace off
+	//	10. Casts shadows onto invisible surfaces
+	Model int64
+}
+
 // TextureEvent indicates that a texture declaration has been scanned.
 // You will likely receive a subtype of this structure so you will likely
 // need to type-switch on this.
@@ -170,6 +190,8 @@ func (s *scanner) processCommand(line common.Line, handler common.EventHandler) 
 		return s.processDissolve(line, handler)
 	case line.HasCommandName("Ns"):
 		return s.processSpecularExponent(line, handler)
+	case line.HasCommandName("illum"):
+		return s.processIlluminationModel(line, handler)
 	case line.HasCommandName("map_Ka"):
 		return s.processAmbientTexture(line, handler)
 	case line.HasCommandName("map_Kd"):
@@ -329,6 +351,20 @@ func (s *scanner) processSpecularExponent(line common.Line, handler common.Event
 	}
 	event := SpecularExponentEvent{
 		Amount: amount,
+	}
+	return handler(event)
+}
+
+func (s *scanner) processIlluminationModel(line common.Line, handler common.EventHandler) error {
+	if line.ParamCount() < 1 {
+		return fmt.Errorf("%w: illumination model declaration lacks value parameter", common.ErrInvalid)
+	}
+	model, err := line.IntParam(0)
+	if err != nil {
+		return err
+	}
+	event := IlluminationEvent{
+		Model: model,
 	}
 	return handler(event)
 }

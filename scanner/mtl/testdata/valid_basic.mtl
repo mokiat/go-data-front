@@ -9,6 +9,7 @@ Tf 0.6 0.7 0.8
 Ke 0.4 0.3 0.9
 d 0.4
 Ns 330.0
+illum 2
 
 map_Ka textures/ambient.bmp
 map_Kd textures/diffuse.bmp

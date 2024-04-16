@@ -123,6 +123,9 @@ var _ = Describe("Scanner", func() {
 			assertEvent(mtl.SpecularExponentEvent{
 				Amount: 330.0,
 			})
+			assertEvent(mtl.IlluminationEvent{
+				Model: 2,
+			})
 			assertEvent(mtl.AmbientTextureEvent{
 				TexturePath: "textures/ambient.bmp",
 			})
@@ -410,6 +413,22 @@ var _ = Describe("Scanner", func() {
 		itShouldHaveReturnedAnError()
 	})
 
+	When("reading illumination without value", func() {
+		BeforeEach(func() {
+			testFile = "error_missing_illumination_value.mtl"
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	When("reading illumination with invalid value", func() {
+		BeforeEach(func() {
+			testFile = "error_invalid_illumination_value.mtl"
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
 	When("reading ambient texture without filename param", func() {
 		BeforeEach(func() {
 			testFile = "error_missing_ambient_texture_filename.mtl"
@@ -522,6 +541,14 @@ var _ = Describe("Scanner", func() {
 		When("on specular exponents", func() {
 			BeforeEach(func() {
 				testFile = "valid_specular_exponents.mtl"
+			})
+
+			itShouldHaveReturnedHandlerError()
+		})
+
+		When("on illumination models", func() {
+			BeforeEach(func() {
+				testFile = "valid_illuminations.mtl"
 			})
 
 			itShouldHaveReturnedHandlerError()

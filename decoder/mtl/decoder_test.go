@@ -116,6 +116,10 @@ var _ = Describe("Decoder", func() {
 				Expect(material.Dissolve).To(Equal(0.7))
 			})
 
+			It("should have decoded illumination model", func() {
+				Expect(material.Illumination).To(Equal(int64(2)))
+			})
+
 			It("should have decoded ambient texture", func() {
 				Expect(material.AmbientTexture).To(Equal("ambient.png"))
 			})
@@ -219,6 +223,14 @@ var _ = Describe("Decoder", func() {
 	When("decoding dissolve without material", func() {
 		BeforeEach(func() {
 			testFile = "error_dissolve_no_material.mtl"
+		})
+
+		itShouldHaveReturnedAnError()
+	})
+
+	When("decoding illumination without material", func() {
+		BeforeEach(func() {
+			testFile = "error_illumination_no_material.mtl"
 		})
 
 		itShouldHaveReturnedAnError()
