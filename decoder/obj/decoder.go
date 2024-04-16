@@ -5,7 +5,7 @@ import (
 	"io"
 
 	"github.com/mokiat/go-data-front/common"
-	scanOBJ "github.com/mokiat/go-data-front/scanner/obj"
+	objscan "github.com/mokiat/go-data-front/scanner/obj"
 )
 
 // DecodeLimits specifies restrictions on parsing.
@@ -81,7 +81,7 @@ type Decoder interface {
 func NewDecoder(limits DecodeLimits) Decoder {
 	return &decoder{
 		limits:  &limits,
-		scanner: scanOBJ.NewScanner(),
+		scanner: objscan.NewScanner(),
 	}
 }
 
@@ -124,37 +124,37 @@ func (c *decodeContext) Model() *Model {
 
 func (c *decodeContext) HandleEvent(event common.Event) error {
 	switch actual := event.(type) {
-	case scanOBJ.MaterialLibraryEvent:
+	case objscan.MaterialLibraryEvent:
 		return c.handleMaterialLibrary(actual)
-	case scanOBJ.VertexEvent:
+	case objscan.VertexEvent:
 		return c.handleVertex(actual)
-	case scanOBJ.NormalEvent:
+	case objscan.NormalEvent:
 		return c.handleNormal(actual)
-	case scanOBJ.TexCoordEvent:
+	case objscan.TexCoordEvent:
 		return c.handleTexCoord(actual)
-	case scanOBJ.ObjectEvent:
+	case objscan.ObjectEvent:
 		return c.handleObject(actual)
-	case scanOBJ.MaterialReferenceEvent:
+	case objscan.MaterialReferenceEvent:
 		return c.handleMaterialReference(actual)
-	case scanOBJ.FaceStartEvent:
+	case objscan.FaceStartEvent:
 		return c.handleFaceStart()
-	case scanOBJ.FaceEndEvent:
+	case objscan.FaceEndEvent:
 		return c.handleFaceEnd()
-	case scanOBJ.ReferenceSetStartEvent:
+	case objscan.ReferenceSetStartEvent:
 		return c.handleReferencesStart()
-	case scanOBJ.ReferenceSetEndEvent:
+	case objscan.ReferenceSetEndEvent:
 		return c.handleReferencesEnd()
-	case scanOBJ.VertexReferenceEvent:
+	case objscan.VertexReferenceEvent:
 		return c.handleVertexReference(actual)
-	case scanOBJ.TexCoordReferenceEvent:
+	case objscan.TexCoordReferenceEvent:
 		return c.handleTexCoordReference(actual)
-	case scanOBJ.NormalReferenceEvent:
+	case objscan.NormalReferenceEvent:
 		return c.handleNormalReference(actual)
 	}
 	return nil
 }
 
-func (c *decodeContext) handleMaterialLibrary(event scanOBJ.MaterialLibraryEvent) error {
+func (c *decodeContext) handleMaterialLibrary(event objscan.MaterialLibraryEvent) error {
 	if len(c.model.MaterialLibraries) >= c.limits.MaxMaterialLibraryCount {
 		return fmt.Errorf("%w: maximum number of material libraries reached", common.ErrLimitsExceeded)
 	}
@@ -162,7 +162,7 @@ func (c *decodeContext) handleMaterialLibrary(event scanOBJ.MaterialLibraryEvent
 	return nil
 }
 
-func (c *decodeContext) handleVertex(event scanOBJ.VertexEvent) error {
+func (c *decodeContext) handleVertex(event objscan.VertexEvent) error {
 	if len(c.model.Vertices) >= c.limits.MaxVertexCount {
 		return fmt.Errorf("%w: maximum number of vertices reached", common.ErrLimitsExceeded)
 	}
@@ -175,7 +175,7 @@ func (c *decodeContext) handleVertex(event scanOBJ.VertexEvent) error {
 	return nil
 }
 
-func (c *decodeContext) handleTexCoord(event scanOBJ.TexCoordEvent) error {
+func (c *decodeContext) handleTexCoord(event objscan.TexCoordEvent) error {
 	if len(c.model.TexCoords) >= c.limits.MaxTexCoordCount {
 		return fmt.Errorf("%w: maximum number of texture coordinates reached", common.ErrLimitsExceeded)
 	}
@@ -187,7 +187,7 @@ func (c *decodeContext) handleTexCoord(event scanOBJ.TexCoordEvent) error {
 	return nil
 }
 
-func (c *decodeContext) handleNormal(event scanOBJ.NormalEvent) error {
+func (c *decodeContext) handleNormal(event objscan.NormalEvent) error {
 	if len(c.model.Normals) >= c.limits.MaxNormalCount {
 		return fmt.Errorf("%w: maximum number of normals reached", common.ErrLimitsExceeded)
 	}
@@ -199,7 +199,7 @@ func (c *decodeContext) handleNormal(event scanOBJ.NormalEvent) error {
 	return nil
 }
 
-func (c *decodeContext) handleObject(event scanOBJ.ObjectEvent) error {
+func (c *decodeContext) handleObject(event objscan.ObjectEvent) error {
 	if len(c.model.Objects) >= c.limits.MaxObjectCount {
 		return fmt.Errorf("%w: maximum number of objects reached", common.ErrLimitsExceeded)
 	}
@@ -210,7 +210,7 @@ func (c *decodeContext) handleObject(event scanOBJ.ObjectEvent) error {
 	return nil
 }
 
-func (c *decodeContext) handleMaterialReference(event scanOBJ.MaterialReferenceEvent) error {
+func (c *decodeContext) handleMaterialReference(event objscan.MaterialReferenceEvent) error {
 	c.assureCurrentObject()
 	mesh, found := c.currentObject.FindMesh(event.MaterialName)
 	if found {
@@ -259,7 +259,7 @@ func (c *decodeContext) handleReferencesEnd() error {
 	return nil
 }
 
-func (c *decodeContext) handleVertexReference(event scanOBJ.VertexReferenceEvent) error {
+func (c *decodeContext) handleVertexReference(event objscan.VertexReferenceEvent) error {
 	if event.VertexIndex > 0 {
 		c.currentReference.VertexIndex = event.VertexIndex - 1
 	} else {
@@ -268,7 +268,7 @@ func (c *decodeContext) handleVertexReference(event scanOBJ.VertexReferenceEvent
 	return nil
 }
 
-func (c *decodeContext) handleTexCoordReference(event scanOBJ.TexCoordReferenceEvent) error {
+func (c *decodeContext) handleTexCoordReference(event objscan.TexCoordReferenceEvent) error {
 	if event.TexCoordIndex > 0 {
 		c.currentReference.TexCoordIndex = event.TexCoordIndex - 1
 	} else {
@@ -277,7 +277,7 @@ func (c *decodeContext) handleTexCoordReference(event scanOBJ.TexCoordReferenceE
 	return nil
 }
 
-func (c *decodeContext) handleNormalReference(event scanOBJ.NormalReferenceEvent) error {
+func (c *decodeContext) handleNormalReference(event objscan.NormalReferenceEvent) error {
 	if event.NormalIndex > 0 {
 		c.currentReference.NormalIndex = event.NormalIndex - 1
 	} else {

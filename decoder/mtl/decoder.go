@@ -5,7 +5,7 @@ import (
 	"io"
 
 	"github.com/mokiat/go-data-front/common"
-	scanMTL "github.com/mokiat/go-data-front/scanner/mtl"
+	mtlscan "github.com/mokiat/go-data-front/scanner/mtl"
 )
 
 // DecodeLimits specifies restrictions on parsing.
@@ -44,7 +44,7 @@ type Decoder interface {
 func NewDecoder(limits DecodeLimits) Decoder {
 	return &decoder{
 		limits:  &limits,
-		scanner: scanMTL.NewScanner(),
+		scanner: mtlscan.NewScanner(),
 	}
 }
 
@@ -82,43 +82,43 @@ func (c *decodeContext) Library() *Library {
 
 func (c *decodeContext) HandleEvent(event common.Event) error {
 	switch actual := event.(type) {
-	case scanMTL.MaterialEvent:
+	case mtlscan.MaterialEvent:
 		return c.handleMaterial(actual)
-	case scanMTL.RGBAmbientColorEvent:
+	case mtlscan.RGBAmbientColorEvent:
 		return c.handleAmbientColor(actual)
-	case scanMTL.RGBDiffuseColorEvent:
+	case mtlscan.RGBDiffuseColorEvent:
 		return c.handleDiffuseColor(actual)
-	case scanMTL.RGBSpecularColorEvent:
+	case mtlscan.RGBSpecularColorEvent:
 		return c.handleSpecularColor(actual)
-	case scanMTL.RGBEmissiveColorEvent:
+	case mtlscan.RGBEmissiveColorEvent:
 		return c.handleEmissiveColor(actual)
-	case scanMTL.RGBTransmissionFilterEvent:
+	case mtlscan.RGBTransmissionFilterEvent:
 		return c.handleTransmissionFilter(actual)
-	case scanMTL.SpecularExponentEvent:
+	case mtlscan.SpecularExponentEvent:
 		return c.handleSpecularExponent(actual)
-	case scanMTL.DissolveEvent:
+	case mtlscan.DissolveEvent:
 		return c.handleDissolve(actual)
-	case scanMTL.IlluminationEvent:
+	case mtlscan.IlluminationEvent:
 		return c.handleIllumination(actual)
-	case scanMTL.AmbientTextureEvent:
+	case mtlscan.AmbientTextureEvent:
 		return c.handleAmbientTexture(actual)
-	case scanMTL.DiffuseTextureEvent:
+	case mtlscan.DiffuseTextureEvent:
 		return c.handleDiffuseTexture(actual)
-	case scanMTL.SpecularTextureEvent:
+	case mtlscan.SpecularTextureEvent:
 		return c.handleSpecularTexture(actual)
-	case scanMTL.EmissiveTextureEvent:
+	case mtlscan.EmissiveTextureEvent:
 		return c.handleEmissiveTexture(actual)
-	case scanMTL.SpecularExponentTextureEvent:
+	case mtlscan.SpecularExponentTextureEvent:
 		return c.handleSpecularExponentTexture(actual)
-	case scanMTL.DissolveTextureEvent:
+	case mtlscan.DissolveTextureEvent:
 		return c.handleDissolveTexture(actual)
-	case scanMTL.BumpTextureEvent:
+	case mtlscan.BumpTextureEvent:
 		return c.handleBumpTexture(actual)
 	}
 	return nil
 }
 
-func (c *decodeContext) handleMaterial(event scanMTL.MaterialEvent) error {
+func (c *decodeContext) handleMaterial(event mtlscan.MaterialEvent) error {
 	if len(c.library.Materials) >= c.limits.MaxMaterialCount {
 		return fmt.Errorf("%w: max number of materials reached", common.ErrLimitsExceeded)
 	}
@@ -128,7 +128,7 @@ func (c *decodeContext) handleMaterial(event scanMTL.MaterialEvent) error {
 	return nil
 }
 
-func (c *decodeContext) handleAmbientColor(event scanMTL.RGBAmbientColorEvent) error {
+func (c *decodeContext) handleAmbientColor(event mtlscan.RGBAmbientColorEvent) error {
 	if c.currentMaterial == nil {
 		return c.newMissingMaterialError()
 	}
@@ -140,7 +140,7 @@ func (c *decodeContext) handleAmbientColor(event scanMTL.RGBAmbientColorEvent) e
 	return nil
 }
 
-func (c *decodeContext) handleDiffuseColor(event scanMTL.RGBDiffuseColorEvent) error {
+func (c *decodeContext) handleDiffuseColor(event mtlscan.RGBDiffuseColorEvent) error {
 	if c.currentMaterial == nil {
 		return c.newMissingMaterialError()
 	}
@@ -152,7 +152,7 @@ func (c *decodeContext) handleDiffuseColor(event scanMTL.RGBDiffuseColorEvent) e
 	return nil
 }
 
-func (c *decodeContext) handleSpecularColor(event scanMTL.RGBSpecularColorEvent) error {
+func (c *decodeContext) handleSpecularColor(event mtlscan.RGBSpecularColorEvent) error {
 	if c.currentMaterial == nil {
 		return c.newMissingMaterialError()
 	}
@@ -164,7 +164,7 @@ func (c *decodeContext) handleSpecularColor(event scanMTL.RGBSpecularColorEvent)
 	return nil
 }
 
-func (c *decodeContext) handleEmissiveColor(event scanMTL.RGBEmissiveColorEvent) error {
+func (c *decodeContext) handleEmissiveColor(event mtlscan.RGBEmissiveColorEvent) error {
 	if c.currentMaterial == nil {
 		return c.newMissingMaterialError()
 	}
@@ -176,7 +176,7 @@ func (c *decodeContext) handleEmissiveColor(event scanMTL.RGBEmissiveColorEvent)
 	return nil
 }
 
-func (c *decodeContext) handleTransmissionFilter(event scanMTL.RGBTransmissionFilterEvent) error {
+func (c *decodeContext) handleTransmissionFilter(event mtlscan.RGBTransmissionFilterEvent) error {
 	if c.currentMaterial == nil {
 		return c.newMissingMaterialError()
 	}
@@ -188,7 +188,7 @@ func (c *decodeContext) handleTransmissionFilter(event scanMTL.RGBTransmissionFi
 	return nil
 }
 
-func (c *decodeContext) handleSpecularExponent(event scanMTL.SpecularExponentEvent) error {
+func (c *decodeContext) handleSpecularExponent(event mtlscan.SpecularExponentEvent) error {
 	if c.currentMaterial == nil {
 		return c.newMissingMaterialError()
 	}
@@ -196,7 +196,7 @@ func (c *decodeContext) handleSpecularExponent(event scanMTL.SpecularExponentEve
 	return nil
 }
 
-func (c *decodeContext) handleDissolve(event scanMTL.DissolveEvent) error {
+func (c *decodeContext) handleDissolve(event mtlscan.DissolveEvent) error {
 	if c.currentMaterial == nil {
 		return c.newMissingMaterialError()
 	}
@@ -204,7 +204,7 @@ func (c *decodeContext) handleDissolve(event scanMTL.DissolveEvent) error {
 	return nil
 }
 
-func (c *decodeContext) handleIllumination(event scanMTL.IlluminationEvent) error {
+func (c *decodeContext) handleIllumination(event mtlscan.IlluminationEvent) error {
 	if c.currentMaterial == nil {
 		return c.newMissingMaterialError()
 	}
@@ -212,7 +212,7 @@ func (c *decodeContext) handleIllumination(event scanMTL.IlluminationEvent) erro
 	return nil
 }
 
-func (c *decodeContext) handleAmbientTexture(event scanMTL.AmbientTextureEvent) error {
+func (c *decodeContext) handleAmbientTexture(event mtlscan.AmbientTextureEvent) error {
 	if c.currentMaterial == nil {
 		return c.newMissingMaterialError()
 	}
@@ -220,7 +220,7 @@ func (c *decodeContext) handleAmbientTexture(event scanMTL.AmbientTextureEvent) 
 	return nil
 }
 
-func (c *decodeContext) handleDiffuseTexture(event scanMTL.DiffuseTextureEvent) error {
+func (c *decodeContext) handleDiffuseTexture(event mtlscan.DiffuseTextureEvent) error {
 	if c.currentMaterial == nil {
 		return c.newMissingMaterialError()
 	}
@@ -228,7 +228,7 @@ func (c *decodeContext) handleDiffuseTexture(event scanMTL.DiffuseTextureEvent) 
 	return nil
 }
 
-func (c *decodeContext) handleSpecularTexture(event scanMTL.SpecularTextureEvent) error {
+func (c *decodeContext) handleSpecularTexture(event mtlscan.SpecularTextureEvent) error {
 	if c.currentMaterial == nil {
 		return c.newMissingMaterialError()
 	}
@@ -236,7 +236,7 @@ func (c *decodeContext) handleSpecularTexture(event scanMTL.SpecularTextureEvent
 	return nil
 }
 
-func (c *decodeContext) handleEmissiveTexture(event scanMTL.EmissiveTextureEvent) error {
+func (c *decodeContext) handleEmissiveTexture(event mtlscan.EmissiveTextureEvent) error {
 	if c.currentMaterial == nil {
 		return c.newMissingMaterialError()
 	}
@@ -244,7 +244,7 @@ func (c *decodeContext) handleEmissiveTexture(event scanMTL.EmissiveTextureEvent
 	return nil
 }
 
-func (c *decodeContext) handleSpecularExponentTexture(event scanMTL.SpecularExponentTextureEvent) error {
+func (c *decodeContext) handleSpecularExponentTexture(event mtlscan.SpecularExponentTextureEvent) error {
 	if c.currentMaterial == nil {
 		return c.newMissingMaterialError()
 	}
@@ -252,7 +252,7 @@ func (c *decodeContext) handleSpecularExponentTexture(event scanMTL.SpecularExpo
 	return nil
 }
 
-func (c *decodeContext) handleDissolveTexture(event scanMTL.DissolveTextureEvent) error {
+func (c *decodeContext) handleDissolveTexture(event mtlscan.DissolveTextureEvent) error {
 	if c.currentMaterial == nil {
 		return c.newMissingMaterialError()
 	}
@@ -260,7 +260,7 @@ func (c *decodeContext) handleDissolveTexture(event scanMTL.DissolveTextureEvent
 	return nil
 }
 
-func (c *decodeContext) handleBumpTexture(event scanMTL.BumpTextureEvent) error {
+func (c *decodeContext) handleBumpTexture(event mtlscan.BumpTextureEvent) error {
 	if c.currentMaterial == nil {
 		return c.newMissingMaterialError()
 	}
