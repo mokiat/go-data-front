@@ -7,6 +7,7 @@ Tf 0.3 1.0 0.4
 Ke 0.4 0.3 0.9
 Ns 650
 d 0.7
+illum 2
 map_Ka ambient.png
 map_Kd diffuse.png
 map_Ks specular.png
