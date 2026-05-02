@@ -182,11 +182,6 @@ func (s *lineScanner) Scan() bool {
 
 	scanIterations := 0
 	for s.scanner.Scan() {
-		if s.scanner.Err() != nil {
-			s.scanErr = s.scanner.Err()
-			return false
-		}
-
 		scanIterations++
 		line := s.scanner.Text()
 		if strings.HasSuffix(line, `\`) {
@@ -195,6 +190,10 @@ func (s *lineScanner) Scan() bool {
 			s.lineBuffer.WriteString(line)
 			break
 		}
+	}
+	if err := s.scanner.Err(); err != nil {
+		s.scanErr = err
+		return false
 	}
 
 	s.scanLine = s.createLine(s.lineBuffer.String())
