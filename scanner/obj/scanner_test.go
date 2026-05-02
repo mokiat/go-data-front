@@ -34,7 +34,7 @@ var _ = Describe("Scanner", func() {
 		})
 	}
 
-	assertEvent := func(expected interface{}) {
+	assertEvent := func(expected any) {
 		GinkgoHelper()
 		Expect(len(trackedHandler.Events)).To(BeNumerically(">", eventCounter))
 		Expect(trackedHandler.Events[eventCounter]).To(Equal(expected))
@@ -194,7 +194,7 @@ var _ = Describe("Scanner", func() {
 			})
 			assertAnyEvent()
 			assertEvent(common.CommentEvent{
-				Comment: "Previous comment was empty. This one contain the # character twice.",
+				Comment: "Previous comment was empty. This one contains the # character twice.",
 			})
 			assertAnyEvents(11)
 			assertEvent(common.CommentEvent{

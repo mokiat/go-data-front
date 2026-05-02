@@ -7,6 +7,6 @@ vt 1.0 0.0
 vn 1.0 0.0 0.0
 #
 o MyObject
-# Previous comment was empty. This one contain the # character twice.
+# Previous comment was empty. This one contains the # character twice.
 f 1 2 3
 # Comment at file end

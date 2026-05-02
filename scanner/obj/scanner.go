@@ -54,7 +54,7 @@ type VertexEvent struct {
 // evaluating the material that is used with the texture coordinates.
 //
 // Another option is to check all the texture coordinates for a given
-// objet. If they all have their last components defaulted, then its
+// object. If they all have their last components defaulted, then its
 // likely the coordinates were of lower dimension.
 // (e.g. all texture coordinates have their W equal to 0.0 which would
 // mean a 2D texture coordinate set)
@@ -217,7 +217,7 @@ func (s *scanner) processCommand(line common.Line, handler common.EventHandler) 
 }
 
 func (s *scanner) processMaterialLibrary(line common.Line, handler common.EventHandler) error {
-	for i := 0; i < line.ParamCount(); i++ {
+	for i := range line.ParamCount() {
 		path := line.StringParam(i)
 		event := MaterialLibraryEvent{
 			FilePath: path,
@@ -335,7 +335,7 @@ func (s *scanner) processFace(line common.Line, handler common.EventHandler) err
 		return err
 	}
 
-	for i := 0; i < line.ParamCount(); i++ {
+	for i := range line.ParamCount() {
 		err := s.processReferenceSet(line.ReferenceSetParam(i), handler)
 		if err != nil {
 			return err
@@ -359,18 +359,24 @@ func (s *scanner) processReferenceSet(referenceSet common.ReferenceSet, handler 
 	if err != nil {
 		return err
 	}
-	handler(VertexReferenceEvent{
+	err = handler(VertexReferenceEvent{
 		VertexIndex: vertexIndex,
 	})
+	if err != nil {
+		return err
+	}
 
 	if (referenceSet.Count() > 1) && !referenceSet.IsBlank(1) {
 		texCoordIndex, err := referenceSet.IntReference(1)
 		if err != nil {
 			return err
 		}
-		handler(TexCoordReferenceEvent{
+		err = handler(TexCoordReferenceEvent{
 			TexCoordIndex: texCoordIndex,
 		})
+		if err != nil {
+			return err
+		}
 	}
 
 	if (referenceSet.Count() > 2) && !referenceSet.IsBlank(2) {
@@ -378,9 +384,12 @@ func (s *scanner) processReferenceSet(referenceSet common.ReferenceSet, handler 
 		if err != nil {
 			return err
 		}
-		handler(NormalReferenceEvent{
+		err = handler(NormalReferenceEvent{
 			NormalIndex: normalIndex,
 		})
+		if err != nil {
+			return err
+		}
 	}
 
 	return handler(ReferenceSetEndEvent{})

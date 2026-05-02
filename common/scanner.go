@@ -13,7 +13,7 @@ import "io"
 //   - CommentEvent
 //   - obj.ObjectEvent
 //   - mtl.MaterialEvent
-type Event interface{}
+type Event any
 
 // CommentEvent indicates that a comment section has been
 // scanned through.
