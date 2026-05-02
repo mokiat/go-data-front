@@ -34,7 +34,7 @@ var _ = Describe("Scanner", func() {
 		})
 	}
 
-	assertEvent := func(expected interface{}) {
+	assertEvent := func(expected any) {
 		GinkgoHelper()
 		Expect(len(trackedHandler.Events)).To(BeNumerically(">", eventCounter))
 		Expect(trackedHandler.Events[eventCounter]).To(Equal(expected))
