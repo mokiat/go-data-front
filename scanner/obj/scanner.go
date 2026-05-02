@@ -217,7 +217,7 @@ func (s *scanner) processCommand(line common.Line, handler common.EventHandler) 
 }
 
 func (s *scanner) processMaterialLibrary(line common.Line, handler common.EventHandler) error {
-	for i := 0; i < line.ParamCount(); i++ {
+	for i := range line.ParamCount() {
 		path := line.StringParam(i)
 		event := MaterialLibraryEvent{
 			FilePath: path,
@@ -335,7 +335,7 @@ func (s *scanner) processFace(line common.Line, handler common.EventHandler) err
 		return err
 	}
 
-	for i := 0; i < line.ParamCount(); i++ {
+	for i := range line.ParamCount() {
 		err := s.processReferenceSet(line.ReferenceSetParam(i), handler)
 		if err != nil {
 			return err
