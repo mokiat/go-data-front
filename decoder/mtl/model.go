@@ -125,7 +125,7 @@ type Material struct {
 	// texture to be used when rendering objects.
 	//
 	// If this value is the empty string, then there is no
-	// Bump texture provided.
+	// bump texture provided.
 	BumpTexture string
 }
 
@@ -154,7 +154,7 @@ func DefaultMaterial() *Material {
 
 // Library represents a material library.
 //
-// A material library can be though of as a
+// A material library can be thought of as a
 // single MTL resource which can contain information
 // on multiple materials.
 type Library struct {

@@ -194,7 +194,7 @@ var _ = Describe("Scanner", func() {
 			})
 			assertAnyEvent()
 			assertEvent(common.CommentEvent{
-				Comment: "Previous comment was empty. This one contain the # character twice.",
+				Comment: "Previous comment was empty. This one contains the # character twice.",
 			})
 			assertAnyEvents(11)
 			assertEvent(common.CommentEvent{

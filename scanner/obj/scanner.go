@@ -54,7 +54,7 @@ type VertexEvent struct {
 // evaluating the material that is used with the texture coordinates.
 //
 // Another option is to check all the texture coordinates for a given
-// objet. If they all have their last components defaulted, then its
+// object. If they all have their last components defaulted, then its
 // likely the coordinates were of lower dimension.
 // (e.g. all texture coordinates have their W equal to 0.0 which would
 // mean a 2D texture coordinate set)
