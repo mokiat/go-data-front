@@ -359,18 +359,24 @@ func (s *scanner) processReferenceSet(referenceSet common.ReferenceSet, handler 
 	if err != nil {
 		return err
 	}
-	handler(VertexReferenceEvent{
+	err = handler(VertexReferenceEvent{
 		VertexIndex: vertexIndex,
 	})
+	if err != nil {
+		return err
+	}
 
 	if (referenceSet.Count() > 1) && !referenceSet.IsBlank(1) {
 		texCoordIndex, err := referenceSet.IntReference(1)
 		if err != nil {
 			return err
 		}
-		handler(TexCoordReferenceEvent{
+		err = handler(TexCoordReferenceEvent{
 			TexCoordIndex: texCoordIndex,
 		})
+		if err != nil {
+			return err
+		}
 	}
 
 	if (referenceSet.Count() > 2) && !referenceSet.IsBlank(2) {
@@ -378,9 +384,12 @@ func (s *scanner) processReferenceSet(referenceSet common.ReferenceSet, handler 
 		if err != nil {
 			return err
 		}
-		handler(NormalReferenceEvent{
+		err = handler(NormalReferenceEvent{
 			NormalIndex: normalIndex,
 		})
+		if err != nil {
+			return err
+		}
 	}
 
 	return handler(ReferenceSetEndEvent{})
