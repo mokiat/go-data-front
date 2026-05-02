@@ -158,7 +158,7 @@ This library uses the **[Ginkgo](https://github.com/onsi/ginkgo)** tool for test
 You can run all the tests with the following command from within the project path.
 
 ```bash
-go run github.com/onsi/ginkgo/v2/ginkgo -r
+go tool ginkgo -r
 ```
 
 ## Notes
